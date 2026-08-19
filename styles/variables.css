@@ -1,0 +1,50 @@
+:root {
+  --color-1: #11212D;
+  --color-2: #253745;
+  --color-3: #4A5C6A;
+  --color-4: #9BA8AB;
+  --color-5: #CCD0CF;
+
+  --text-main: #CCD0CF;
+  --text-soft: rgba(204, 208, 207, 0.7);
+  --text-dim: rgba(204, 208, 207, 0.45);
+
+  --bg-gradient: linear-gradient(160deg, #11212D 0%, #253745 30%, #4A5C6A 60%, #9BA8AB 85%, #CCD0CF 100%);
+
+  --glass-bg: rgba(37, 55, 69, 0.55);
+  --glass-bg-soft: rgba(74, 92, 106, 0.4);
+  --glass-border: rgba(155, 168, 171, 0.18);
+  --glass-border-strong: rgba(155, 168, 171, 0.32);
+  --glass-blur: 18px;
+
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+
+  --shadow-panel: 0 8px 32px rgba(17, 33, 45, 0.35);
+  --shadow-glow: 0 0 24px rgba(17, 33, 45, 0.45);
+
+  --accent-green: #4ADE80;
+  --accent-red: #F87171;
+  --accent-gold: #FFD76A;
+
+  --nav-height: 72px;
+  --topbar-height: 64px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --rarity-basic: linear-gradient(135deg, #1a1d21 0%, #2c3036 50%, #3a3f45 100%);
+  --rarity-silver: linear-gradient(135deg, #8e9aa3 0%, #d4dade 50%, #ffffff 100%);
+  --rarity-gold: linear-gradient(135deg, #7a4a00 0%, #ffb800 45%, #ff8c1a 75%, #ffd76a 100%);
+  --rarity-diamond: linear-gradient(135deg, #041b3d 0%, #0066ff 40%, #00d4ff 70%, #8be9ff 100%);
+  --rarity-mythic: linear-gradient(135deg, #2a0845 0%, #8b3ce0 30%, #ec4899 60%, #f59e0b 85%, #a855f7 100%);
+
+  --rarity-color-basic: #3a3f45;
+  --rarity-color-silver: #d4dade;
+  --rarity-color-gold: #ffb800;
+  --rarity-color-diamond: #00d4ff;
+  --rarity-color-mythic: #a855f7;
+}

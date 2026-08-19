@@ -1,0 +1,20 @@
+# Секреты — никогда не коммитить
+.env
+backend/.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Данные бэкенда
+backend/data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
