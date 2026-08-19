@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#070D13">
+<title>rbxflare — Админ-панель</title>
+<link rel="stylesheet" href="styles/variables.css">
+<link rel="stylesheet" href="styles/base.css">
+<link rel="stylesheet" href="styles/components.css">
+<link rel="stylesheet" href="styles/navigation.css">
+<link rel="stylesheet" href="styles/sections.css">
+<link rel="stylesheet" href="styles/admin.css">
+</head>
+<body class="admin-page">
+  <div id="app">
+    <header class="admin-topbar">
+      <button class="back-btn" id="admin-back"></button>
+      <h3 class="admin-heading"></h3>
+    </header>
+    <main class="admin-main">
+      <div id="admin-root"></div>
+    </main>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="toast-root"></div>
+  <div id="popup-root"></div>
+
+  <script src="scripts/cache.js"></script>
+  <script src="scripts/icons.js"></script>
+  <script src="scripts/i18n.js"></script>
+  <script src="scripts/telegram.js"></script>
+  <script src="scripts/api.js"></script>
+  <script src="scripts/state.js"></script>
+  <script src="scripts/ui.js"></script>
+  <script src="scripts/views/admin.js"></script>
+  <script>
+    (function () {
+      const user = TG.init();
+      State.load();
+      I18N.setLang(State.get().lang);
+      I18N.applyDOM();
+      const back = document.getElementById("admin-back");
+      back.innerHTML = Icons.get("arrow") + I18N.t("profile.title");
+      document.querySelector(".admin-heading").innerHTML = Icons.get("shield") + I18N.t("admin.title");
+      back.addEventListener("click", () => {
+        if (window.history.length > 1) window.history.back();
+        else window.location.href = "index.html";
+      });
+      if (!State.isOwner()) {
+        document.getElementById("admin-root").innerHTML =
+          '<div class="empty-state">' + Icons.get("shield") + '<div class="empty-title">403</div><div class="empty-sub">' + I18N.t("admin.denied") + '</div></div>';
+        return;
+      }
+      Views.admin();
+    })();
+  </script>
+</body>
+</html>

@@ -184,6 +184,35 @@ const UI = (function () {
     requestAnimationFrame(tick);
   }
 
+  /* ---------------- история ---------------- */
+  function historyRowsHtml() {
+    const s = State.get();
+    if (!s.history.length) {
+      return `<div class="empty-state" style="padding:28px 16px">${Icons.get("history")}<div class="empty-title">${I18N.t("profile.history.empty")}</div></div>`;
+    }
+    const iconMap = { card: "cards", stake: "coin", buy: "shop", task: "medal", daily: "daily" };
+    return s.history
+      .map((h) => {
+        const icon = iconMap[h.icon] || "info";
+        const amount =
+          h.amountType === "coins"
+            ? `<span class="hist-amount" style="color:var(--accent-gold)">+${fmt(h.amount)} C</span>`
+            : h.amountType === "robux"
+            ? `<span class="hist-amount" style="color:var(--text-main)">+${fmt(h.amount)} R</span>`
+            : "";
+        return `
+          <div class="list-row history-row">
+            <span class="hist-icon">${Icons.get(icon)}</span>
+            <span style="flex:1;min-width:0">
+              <div class="hist-text">${I18N.t(h.text)}</div>
+              <div class="hist-date">${new Date(h.ts).toLocaleDateString("ru-RU")} ${new Date(h.ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}</div>
+            </span>
+            ${amount}
+          </div>`;
+      })
+      .join("");
+  }
+
   /* ---------------- тактильная отдача ---------------- */
   function haptic(type) {
     const st = State && State.get ? State.get() : null;
@@ -220,5 +249,6 @@ const UI = (function () {
     countUp,
     haptic,
     avatarHtml,
+    historyRowsHtml,
   };
 })();

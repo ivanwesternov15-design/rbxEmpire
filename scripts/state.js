@@ -51,16 +51,16 @@ const State = (function () {
   }
 
   function defaultTasks() {
-    const mk = (id, type, titleKey, descKey, target, reward) => ({ id, type, titleKey, descKey, title: "", desc: "", target, reward, done: false, progress: 0 });
+    const mk = (id, type, titleKey, descKey, target, reward, cat) => ({ id, type, titleKey, descKey, title: "", desc: "", target, reward, done: false, progress: 0, cat: cat || "ach" });
     return [
-      mk("t1", "collect", "task.t.collect", "task.d.collect", 1, { type: "coins", amount: 100 }),
-      mk("t2", "collect5", "task.t.collect5", "task.d.collect5", 5, { type: "coins", amount: 500 }),
-      mk("t3", "streak", "task.t.streak3", "task.d.streak3", 3, { type: "coins", amount: 150 }),
-      mk("t4", "staking", "task.t.staking1", "task.d.staking1", 1, { type: "coins", amount: 200 }),
-      mk("t5", "invite", "task.t.invite", "task.d.invite", 1, { type: "coins", amount: 300 }),
-      mk("t6", "robux", "task.t.robux500", "task.d.robux500", 500, { type: "coins", amount: 250 }),
-      mk("t7", "daily", "task.t.daily", "task.d.daily", 1, { type: "coins", amount: 100 }),
-      mk("t8", "custom", "task.t.custom", "task.d.custom", 1, { type: "coins", amount: 200 }),
+      mk("t1", "collect", "task.t.collect", "task.d.collect", 1, { type: "coins", amount: 100 }, "ach"),
+      mk("t2", "collect5", "task.t.collect5", "task.d.collect5", 5, { type: "coins", amount: 500 }, "ach"),
+      mk("t3", "streak", "task.t.streak3", "task.d.streak3", 3, { type: "coins", amount: 150 }, "ach"),
+      mk("t4", "staking", "task.t.staking1", "task.d.staking1", 1, { type: "coins", amount: 200 }, "ach"),
+      mk("t5", "invite", "task.t.invite", "task.d.invite", 1, { type: "coins", amount: 300 }, "friends"),
+      mk("t6", "robux", "task.t.robux500", "task.d.robux500", 500, { type: "coins", amount: 250 }, "ach"),
+      mk("t7", "daily", "task.t.daily", "task.d.daily", 1, { type: "coins", amount: 100 }, "ach"),
+      mk("t8", "custom", "task.t.custom", "task.d.custom", 1, { type: "coins", amount: 200 }, "subs"),
     ];
   }
 
@@ -82,6 +82,7 @@ const State = (function () {
       pendingReferral: null,
       tasks: defaultTasks(),
       history: [],
+      lastSeenHistoryTs: 0,
       admin: {
         staking: {
           "12h": { pct: 0.5, bonus: 0 },
@@ -112,10 +113,12 @@ const State = (function () {
     data.balances = Object.assign({}, d.balances, data.balances || {});
     data.daily = Object.assign({}, d.daily, data.daily || {});
     data.tasks = Array.isArray(data.tasks) && data.tasks.length ? data.tasks : d.tasks;
+    data.tasks.forEach((t) => { if (!t.cat) t.cat = "ach"; });
     data.shop = Array.isArray(data.shop) ? data.shop : [];
     data.stakesStarted = data.stakesStarted || 0;
     data.totalCollected = data.totalCollected || 0;
     data.stakingCompleted = data.stakingCompleted || 0;
+    data.lastSeenHistoryTs = data.lastSeenHistoryTs || 0;
     save();
   }
 
@@ -170,6 +173,16 @@ const State = (function () {
       amountType: amountType || "",
     });
     if (data.history.length > 200) data.history.length = 200;
+  }
+
+  /* ---------------- история / уведомления ---------------- */
+  function unreadHistoryCount() {
+    return data.history.filter((h) => h.ts > (data.lastSeenHistoryTs || 0)).length;
+  }
+  function markHistorySeen() {
+    if (!data.history.length) return;
+    data.lastSeenHistoryTs = data.history[0].ts;
+    save();
   }
 
   /* ---------------- ежедневные карточки (лотерея) ---------------- */
@@ -420,7 +433,7 @@ const State = (function () {
   }
 
   function addTask(t) {
-    data.tasks.push(Object.assign({ id: uid(), done: false, progress: 0 }, t));
+    data.tasks.push(Object.assign({ id: uid(), done: false, progress: 0, cat: t.cat || "ach" }, t));
     save();
     emit();
   }
@@ -523,6 +536,8 @@ const State = (function () {
     handleStartParam,
     flushPendingReferral,
     syncFriends,
+    unreadHistoryCount,
+    markHistorySeen,
     addTestFriend,
     taskProgress,
     checkTasks,

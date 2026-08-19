@@ -6,6 +6,8 @@
 (function () {
   const DUR_KEYS = ["12h", "24h", "3d", "7d"];
   const DUR_LABELS = { "12h": "12 ч", "24h": "24 ч", "3d": "3 дн", "7d": "7 дн" };
+  const CAT_KEYS = ["subs", "ach", "friends"];
+  const CAT_LABELS = { subs: () => I18N.t("task.cat.subs"), ach: () => I18N.t("task.cat.ach"), friends: () => I18N.t("task.cat.friends") };
   const TASK_TYPES = [
     { v: "collect", l: "task.t.collect" },
     { v: "collect5", l: "task.t.collect5" },
@@ -191,7 +193,10 @@
           <div class="admin-card" style="margin-bottom:8px">
             <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
               <div>
-                <div style="font-weight:700;font-size:13.5px">${title}</div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  <span style="font-weight:700;font-size:13.5px">${title}</span>
+                  <span class="badge" style="font-size:10px;padding:2px 8px">${CAT_LABELS[t.cat] ? CAT_LABELS[t.cat]() : I18N.t("task.cat.ach")}</span>
+                </div>
                 <div class="text-dim" style="font-size:11.5px;margin-top:2px">${type} · ${I18N.t("admin.tasks.target")}: ${t.target} · ${reward} ${t.done ? "· ✓" : ""}</div>
               </div>
               <div style="display:flex;gap:6px;flex-shrink:0">
@@ -206,12 +211,17 @@
       })
       .join("");
     const typeOptions = TASK_TYPES.map((tt) => `<option value="${tt.v}">${I18N.t(tt.l)}</option>`).join("");
+    const catOptions = CAT_KEYS.map((c) => `<option value="${c}">${CAT_LABELS[c]()}</option>`).join("");
     return `
       <div class="admin-section">
         <h4>${Icons.get("tasks")}${I18N.t("admin.tasks")}</h4>
         ${list}
         <div class="admin-card">
           <div class="ac-title">${I18N.t("admin.tasks.add")}</div>
+          <div class="admin-inline" style="align-items:flex-start;flex-direction:column;gap:6px">
+            <span class="ai-label">${I18N.t("admin.tasks.cat")}</span>
+            <select id="task-cat" style="width:100%">${catOptions}</select>
+          </div>
           <div class="field"><label>${I18N.t("admin.tasks.title")}</label><input id="task-title" type="text"></div>
           <div class="field"><label>${I18N.t("admin.tasks.desc")}</label><input id="task-desc" type="text"></div>
           <div class="admin-inline" style="align-items:flex-start;flex-direction:column;gap:6px">
@@ -298,6 +308,8 @@
       addTask.addEventListener("click", () => {
         const title = root.querySelector("#task-title").value.trim();
         const desc = root.querySelector("#task-desc").value.trim();
+        const catEl = root.querySelector("#task-cat");
+        const cat = catEl ? catEl.value : "ach";
         const type = root.querySelector("#task-type").value;
         const target = parseInt(root.querySelector("#task-target").value, 10) || 1;
         const rType = root.querySelector("#task-reward-type").value;
@@ -306,6 +318,7 @@
           type,
           title,
           desc,
+          cat,
           target,
           reward: rType === "card" ? { type: "card", rarity: "gold" } : { type: rType, amount },
         });
@@ -360,14 +373,16 @@
   }
 
   Views.admin = function () {
-    const sub = document.getElementById("profile-sub");
+    const isPage = !!document.getElementById("admin-root");
+    const sub = isPage ? document.getElementById("admin-root") : document.getElementById("profile-sub");
     if (!sub) return;
     const s = State.get();
     sub.innerHTML = `
+      ${isPage ? "" : `
       <div class="sub-header">
         <button class="back-btn" id="admin-back">${Icons.get("arrow")}${I18N.t("profile.title")}</button>
         <h3>${Icons.get("shield")}${I18N.t("admin.title")}</h3>
-      </div>
+      </div>`}
       <div class="admin-stats">
         <div class="admin-stat">${Icons.get("cards")}<b>${s.inventory.length}</b><span>${I18N.t("cards.title")}</span></div>
         <div class="admin-stat">${Icons.get("users")}<b>${s.referrals.length}</b><span>${I18N.t("ref.title")}</span></div>
@@ -380,10 +395,16 @@
       ${shopSection()}
       ${tasksSection()}
       ${testSection()}`;
-    sub.querySelector("#admin-back").addEventListener("click", () => {
-      window.ADMIN_OPEN = false;
-      Views.render("profile");
-    });
+    const back = sub.querySelector("#admin-back");
+    if (back) {
+      back.addEventListener("click", () => {
+        if (isPage) window.history.back();
+        else {
+          window.ADMIN_OPEN = false;
+          Views.render("profile");
+        }
+      });
+    }
     bind(sub);
   };
 })();

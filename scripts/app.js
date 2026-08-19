@@ -15,6 +15,23 @@ if (typeof window === "undefined") {
     if (sp) sp.classList.add("splash-hide");
   }
 
+  /* ---------------- история: бейдж + окно ---------------- */
+  function renderHistoryBadge() {
+    const badge = document.getElementById("hist-badge");
+    if (!badge) return;
+    const n = State.unreadHistoryCount();
+    badge.hidden = n <= 0;
+    badge.textContent = n > 9 ? "9+" : String(n);
+  }
+
+  function openHistoryModal() {
+    UI.haptic("light");
+    State.markHistorySeen();
+    renderHistoryBadge();
+    const m = UI.modal({ title: I18N.t("profile.history.title"), icon: "history", body: UI.historyRowsHtml() });
+    m.onSwipeDown(() => {});
+  }
+
   /* ---------------- диспетчер рендера ---------------- */
   function renderTopbar() {
     const tb = document.getElementById("topbar");
@@ -27,6 +44,12 @@ if (typeof window === "undefined") {
     const uname = user.username ? "@" + user.username : "";
     document.getElementById("topbar-username").textContent = uname;
     document.getElementById("topbar-id").textContent = "ID: " + user.id;
+    const iconEl = document.getElementById("hist-btn-icon");
+    if (iconEl && !iconEl.dataset.ready) {
+      iconEl.dataset.ready = "1";
+      iconEl.innerHTML = Icons.get("history");
+    }
+    renderHistoryBadge();
   }
 
   Views.render = function (name) {
@@ -49,7 +72,9 @@ if (typeof window === "undefined") {
         UI.popup("+" + UI.fmt(amt) + (c.granted.coins ? " " + I18N.t("stats.coins") : " " + I18N.t("stats.robux")), c.granted.coins ? "coin" : "robux");
       }
     });
-    if (Nav.currentSection()) Views.render(Nav.currentSection());
+    renderHistoryBadge();
+    // один рендер за переход: если секцию только что отрисовал switchTo — пропускаем
+    if (!Nav.shouldSkipRender() && Nav.currentSection()) Views.render(Nav.currentSection());
     Nav.renderNav();
   });
 
@@ -83,6 +108,9 @@ if (typeof window === "undefined") {
       if (!res || !res.ok) console.warn("[rbxflare] initData validation failed");
     });
   }
+
+  const histBtn = document.getElementById("topbar-history");
+  if (histBtn) histBtn.addEventListener("click", openHistoryModal);
 
   window.addEventListener("resize", () => Nav.updateIndicator());
 })();

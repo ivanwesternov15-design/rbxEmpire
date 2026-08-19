@@ -17,6 +17,14 @@ const Nav = (function () {
   let current = "home";
   let busy = false;
   let suppressClick = false;
+  let lastRenderAt = 0;
+
+  function markRendered() {
+    lastRenderAt = Date.now();
+  }
+  function shouldSkipRender() {
+    return Date.now() - lastRenderAt < 350;
+  }
 
   function sectionEl(name) {
     return document.getElementById("sec-" + name);
@@ -41,12 +49,13 @@ const Nav = (function () {
     const indicator = document.getElementById("nav-indicator");
     const active = nav.querySelector('.nav-item[data-section="' + current + '"]');
     if (!active) return;
-    const pad = 10;
+    const padX = 8;
     const left = active.offsetLeft;
     const width = active.offsetWidth;
     const center = left + width / 2;
-    indicator.style.left = (center - (width - pad * 2) / 2) + "px";
-    indicator.style.width = (width - pad * 2) + "px";
+    indicator.style.left = (center - (width - padX * 2) / 2) + "px";
+    indicator.style.width = (width - padX * 2) + "px";
+    indicator.style.height = "calc(100% - 12px)";
     const acc = ACCENTS[current] || ACCENTS.home;
     indicator.style.setProperty("--nav-color", acc[0]);
     indicator.style.setProperty("--nav-color-2", acc[1]);
@@ -101,21 +110,17 @@ const Nav = (function () {
     if (toIdx < 0) return;
     const prev = sectionEl(current);
     const next = sectionEl(name);
-    const forward = toIdx > fromIdx;
 
     busy = true;
     setTimeout(() => (busy = false), 420);
 
     if (prev) {
       prev.classList.remove("active");
-      prev.classList.add("sec-out");
-      setTimeout(() => prev.classList.remove("sec-out"), 260);
+      prev.classList.remove("sec-out", "sec-in-left", "sec-in");
     }
-    next.classList.remove("sec-out", "sec-in-left");
+    next.classList.remove("sec-out", "sec-in-left", "sec-in");
     next.classList.add("active");
     void next.offsetWidth;
-    next.classList.add(forward ? "sec-in-left" : "sec-in");
-    setTimeout(() => next.classList.remove("sec-in-left", "sec-in"), 400);
 
     current = name;
     document.querySelectorAll(".nav-item").forEach((it) => {
@@ -126,10 +131,11 @@ const Nav = (function () {
     updateIndicator();
 
     const topbar = document.getElementById("topbar");
-    if (name === "profile") topbar.classList.add("hidden");
-    else topbar.classList.remove("hidden");
+    if (name === "home") topbar.classList.remove("hidden");
+    else topbar.classList.add("hidden");
 
     Views.render(name);
+    markRendered();
   }
 
   function openCategorySheet() {
@@ -162,5 +168,5 @@ const Nav = (function () {
     renderNav();
   }
 
-  return { renderNav, switchTo, openCategorySheet, currentSection, refreshCurrent, updateIndicator };
+  return { renderNav, switchTo, openCategorySheet, currentSection, refreshCurrent, updateIndicator, shouldSkipRender };
 })();

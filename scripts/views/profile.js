@@ -1,8 +1,8 @@
 /**
- * Раздел «Профиль»: карточка профиля, вкладки (Настройки/История/Поддержка/О приложении), админ-вход.
+ * Раздел «Профиль»: карточка профиля, квадратные табы (Настройки/История/Поддержка/О приложении),
+ * открывающиеся в отдельных окнах, админ-панель — отдельная страница admin.html.
  */
 (function () {
-  let currentTab = "settings";
   let bio = "";
 
   function fetchBio() {
@@ -27,8 +27,10 @@
     return `
       <div class="panel glass-panel profile-card">
         ${UI.avatarHtml(user, 88)}
-        ${owner ? `<span class="badge badge-gold" style="margin-top:4px">${Icons.get("shield")}${I18N.t("profile.owner")}</span>` : ""}
-        <div class="profile-username">${name}</div>
+        <div class="profile-name-row">
+          ${owner ? `<span class="badge badge-gold owner-badge">${Icons.get("shield")}${I18N.t("profile.owner")}</span>` : ""}
+          <div class="profile-username">${name}</div>
+        </div>
         <div class="profile-meta">
           ${handle ? `<span class="profile-handle">${handle}</span>` : ""}
           <span class="profile-id">ID: ${user.id}</span>
@@ -36,21 +38,19 @@
         ${bioHtml}
         <div class="profile-first">${Icons.get("history")}${I18N.t("profile.first")}: ${UI.fmtFullDate(new Date(s.firstLogin || Date.now()).getTime())}</div>
       </div>
-      <div class="profile-tabs">
-        <button class="profile-tab ${currentTab === "settings" ? "active" : ""}" data-tab="settings">${Icons.get("settings")}${I18N.t("profile.tabs.settings")}</button>
-        <button class="profile-tab ${currentTab === "history" ? "active" : ""}" data-tab="history">${Icons.get("history")}${I18N.t("profile.tabs.history")}</button>
-        <button class="profile-tab ${currentTab === "support" ? "active" : ""}" data-tab="support">${Icons.get("support")}${I18N.t("profile.tabs.support")}</button>
-        <button class="profile-tab ${currentTab === "about" ? "active" : ""}" data-tab="about">${Icons.get("about")}${I18N.t("profile.tabs.about")}</button>
+      <div class="profile-tabs-grid">
+        <button class="profile-tab" data-tab="settings">${Icons.get("settings")}<span>${I18N.t("profile.tabs.settings")}</span></button>
+        <button class="profile-tab" data-tab="history">${Icons.get("history")}<span>${I18N.t("profile.tabs.history")}</span></button>
+        <button class="profile-tab" data-tab="support">${Icons.get("support")}<span>${I18N.t("profile.tabs.support")}</span></button>
+        <button class="profile-tab" data-tab="about">${Icons.get("about")}<span>${I18N.t("profile.tabs.about")}</span></button>
       </div>
-      <div id="profile-sub"></div>
       ${owner ? `
-        <button class="btn btn-gold" id="admin-open" style="width:100%;margin-top:4px">
+        <button class="btn btn-gold admin-link-btn" id="admin-open">
           ${Icons.get("shield")}${I18N.t("profile.admin")}
-          <span class="text-dim" style="font-size:12px;font-weight:600">· ${I18N.t("profile.admin.sub")}</span>
         </button>` : ""}`;
   }
 
-  /* ---------- вкладки ---------- */
+  /* ---------- содержимое окон ---------- */
   function settingsHtml() {
     const s = State.get();
     return `
@@ -88,43 +88,10 @@
       </div>`;
   }
 
-  function historyHtml() {
-    const s = State.get();
-    if (!s.history.length) {
-      return `<div class="panel glass-panel"><div class="empty-state">${Icons.get("history")}<div class="empty-title">${I18N.t("profile.history.empty")}</div></div></div>`;
-    }
-    const iconMap = { card: "cards", stake: "coin", buy: "shop", task: "medal", daily: "daily" };
-    const rows = s.history
-      .map((h) => {
-        const icon = iconMap[h.icon] || "info";
-        const amount =
-          h.amountType === "coins"
-            ? `<span class="hist-amount" style="color:var(--accent-gold)">+${UI.fmt(h.amount)} C</span>`
-            : h.amountType === "robux"
-            ? `<span class="hist-amount" style="color:var(--text-main)">+${UI.fmt(h.amount)} R</span>`
-            : "";
-        return `
-          <div class="list-row history-row">
-            <span class="hist-icon">${Icons.get(icon)}</span>
-            <span style="flex:1;min-width:0">
-              <div class="hist-text">${I18N.t(h.text)}</div>
-              <div class="hist-date">${new Date(h.ts).toLocaleDateString("ru-RU")} ${new Date(h.ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}</div>
-            </span>
-            ${amount}
-          </div>`;
-      })
-      .join("");
-    return `<div class="panel glass-panel" style="padding:12px">${rows}</div>`;
-  }
-
   function supportHtml() {
     return `
       <div class="panel glass-panel" style="padding:14px">
         <div class="text-soft" style="font-size:13px;margin-bottom:12px">${I18N.t("profile.support.sub")}</div>
-        <button class="list-row" id="support-bot" style="width:100%;text-align:left">
-          <span class="row-icon">${Icons.get("send")}</span>
-          <span><span class="row-title" style="display:block">${I18N.t("profile.support.bot")}</span><span class="row-sub">@rxgame_bot</span></span>
-        </button>
         <button class="list-row" id="support-owner" style="width:100%;text-align:left">
           <span class="row-icon">${Icons.get("support")}</span>
           <span><span class="row-title" style="display:block">${I18N.t("profile.support.owner")}</span><span class="row-sub">@darkgeniy</span></span>
@@ -167,30 +134,26 @@
         </div>
       </div>
       <div class="about-footer">
-        <span class="badge">${I18N.t("profile.about.version")}: v1.1.2</span>
+        <span class="badge">${I18N.t("profile.about.version")}: v1.2.0</span>
       </div>`;
   }
 
-  function renderSub() {
-    const sub = document.getElementById("profile-sub");
-    if (!sub) return;
-    sub.innerHTML = currentTab === "settings" ? settingsHtml() : currentTab === "history" ? historyHtml() : currentTab === "support" ? supportHtml() : aboutHtml();
-
-    // привязки
-    sub.querySelectorAll(".lang-pill").forEach((p) => {
+  /* ---------- привязки внутри окон ---------- */
+  function bindSettings(root) {
+    root.querySelectorAll(".lang-pill").forEach((p) => {
       p.addEventListener("click", () => {
         UI.haptic("light");
         State.setLang(p.getAttribute("data-lang"));
       });
     });
-    const hapticBtn = sub.querySelector("#haptics-toggle");
+    const hapticBtn = root.querySelector("#haptics-toggle");
     if (hapticBtn) {
       hapticBtn.addEventListener("click", () => {
         UI.haptic("light");
         State.setHaptics(!State.get().haptics);
       });
     }
-    const resetBtn = sub.querySelector("#reset-btn");
+    const resetBtn = root.querySelector("#reset-btn");
     if (resetBtn) {
       resetBtn.addEventListener("click", () => {
         UI.haptic("warning");
@@ -211,38 +174,44 @@
         });
       });
     }
-    const botBtn = sub.querySelector("#support-bot");
-    if (botBtn) botBtn.addEventListener("click", () => TG.openTelegramLink("https://t.me/rxgame_bot"));
-    const ownerBtn = sub.querySelector("#support-owner");
+  }
+
+  function bindSupport(root) {
+    const ownerBtn = root.querySelector("#support-owner");
     if (ownerBtn) ownerBtn.addEventListener("click", () => TG.openTelegramLink("https://t.me/darkgeniy"));
   }
 
+  /* ---------- открытие таба в отдельном окне ---------- */
+  function openTabModal(tab) {
+    UI.haptic("light");
+    const icons = { settings: "settings", history: "history", support: "support", about: "about" };
+    let body;
+    if (tab === "settings") body = settingsHtml();
+    else if (tab === "history") body = UI.historyRowsHtml();
+    else if (tab === "support") body = supportHtml();
+    else body = aboutHtml();
+    const m = UI.modal({ title: I18N.t("profile.tabs." + tab), icon: icons[tab] || "info", body });
+    m.onSwipeDown(() => {});
+    if (tab === "settings") bindSettings(m.bodyEl);
+    else if (tab === "support") bindSupport(m.bodyEl);
+    else if (tab === "history") State.markHistorySeen();
+  }
+
   Views.profile = function () {
-    if (window.ADMIN_OPEN) {
-      Views.admin();
-      return;
-    }
     const sec = document.getElementById("sec-profile");
     sec.innerHTML = profileHtml();
 
     sec.querySelectorAll(".profile-tab").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        currentTab = tab.getAttribute("data-tab");
-        UI.haptic("light");
-        sec.querySelectorAll(".profile-tab").forEach((t) => t.classList.toggle("active", t === tab));
-        renderSub();
-      });
+      tab.addEventListener("click", () => openTabModal(tab.getAttribute("data-tab")));
     });
 
     const adminBtn = sec.querySelector("#admin-open");
     if (adminBtn) {
       adminBtn.addEventListener("click", () => {
         UI.haptic("light");
-        window.ADMIN_OPEN = true;
-        Views.admin();
+        window.location.href = "admin.html";
       });
     }
-    renderSub();
   };
 
   // подгрузка bio вызывается из app.js после TG.init()

@@ -15,7 +15,7 @@ const TG = (function () {
       try {
         webApp.ready();
         webApp.expand();
-        webApp.setHeaderColor && webApp.setHeaderColor("#0B1620");
+        webApp.setHeaderColor && webApp.setHeaderColor("#070D13");
         webApp.setBackgroundColor && webApp.setBackgroundColor("#0B1620");
       } catch (e) {}
     }
@@ -35,15 +35,15 @@ const TG = (function () {
         premium: !!u.is_premium,
       };
     } else {
-      // Демо-пользователь вне Telegram (владелец — для доступа к админ-панели)
+      // Демо-пользователь вне Telegram: нейтральный, без привязки к конкретному аккаунту
       user = {
-        id: OWNER_ID,
-        firstName: "Senku",
+        id: 0,
+        firstName: "",
         lastName: "",
-        username: "qzysl",
+        username: "",
         photoUrl: "",
         lang: "ru",
-        premium: true,
+        premium: false,
       };
     }
 

@@ -1,7 +1,7 @@
 :root {
-  --color-1: #0B1620;
-  --color-2: #253745;
-  --color-3: #4A5C6A;
+  --color-1: #070D13;
+  --color-2: #14222E;
+  --color-3: #33475A;
   --color-4: #8FA3B5;
   --color-5: #E2E8F0;
 
@@ -11,13 +11,13 @@
 
   /* фон «картина маслом»: глубокий тёмно-синий с мягкими сияниями */
   --bg-gradient:
-    radial-gradient(120% 90% at 85% -10%, rgba(56, 189, 248, 0.16), transparent 55%),
-    radial-gradient(110% 80% at -10% 25%, rgba(167, 139, 250, 0.12), transparent 55%),
-    radial-gradient(130% 100% at 50% 110%, rgba(34, 211, 238, 0.1), transparent 60%),
-    linear-gradient(165deg, #0B1620 0%, #0F1E2B 28%, #14293A 52%, #1B3446 78%, #223E53 100%);
+    radial-gradient(120% 90% at 85% -10%, rgba(56, 189, 248, 0.12), transparent 55%),
+    radial-gradient(110% 80% at -10% 25%, rgba(167, 139, 250, 0.09), transparent 55%),
+    radial-gradient(130% 100% at 50% 110%, rgba(34, 211, 238, 0.08), transparent 60%),
+    linear-gradient(165deg, #070D13 0%, #0A141D 30%, #0D1B27 52%, #12232F 78%, #16293A 100%);
 
-  --glass-bg: rgba(22, 38, 52, 0.6);
-  --glass-bg-soft: rgba(44, 66, 84, 0.42);
+  --glass-bg: rgba(14, 26, 38, 0.62);
+  --glass-bg-soft: rgba(26, 42, 58, 0.4);
   --glass-border: rgba(143, 163, 181, 0.16);
   --glass-border-strong: rgba(143, 163, 181, 0.3);
   --glass-blur: 20px;

@@ -57,16 +57,28 @@
       sec.innerHTML = `<div class="panel glass-panel"><div class="empty-state">${Icons.get("tasks")}<div class="empty-title">${I18N.t("tasks.empty")}</div></div></div>`;
       return;
     }
-    const active = tasks.filter((t) => !t.done);
-    const done = tasks.filter((t) => t.done);
-    const doneCount = done.length;
+    const doneCount = tasks.filter((t) => t.done).length;
     const totalCount = tasks.length;
     const donePct = Math.round((doneCount / totalCount) * 100);
 
-    const groupHtml = (list, labelKey, icon) =>
-      list.length
-        ? `<div class="task-group-title">${Icons.get(icon)}${I18N.t(labelKey)}</div>` + list.map(taskCardHtml).join("")
-        : "";
+    const CATS = [
+      { key: "subs", icon: "send" },
+      { key: "ach", icon: "trophy" },
+      { key: "friends", icon: "users" },
+    ];
+
+    const catHtml = CATS.map((cat) => {
+      const list = tasks.filter((t) => (t.cat || "ach") === cat.key);
+      if (!list.length) return "";
+      const active = list.filter((t) => !t.done);
+      const done = list.filter((t) => t.done);
+      const group = (items, doneFlag) => items.map((t) => taskCardHtml(t, doneFlag)).join("");
+      return `
+        <div class="task-group-title">${Icons.get(cat.icon)}${I18N.t("task.cat." + cat.key)}</div>
+        <div class="task-cat-desc">${I18N.t("task.cat." + cat.key + ".desc")}</div>
+        ${group(active, false)}
+        ${group(done, true)}`;
+    }).join("");
 
     sec.innerHTML = `
       <div class="panel glass-panel">
@@ -84,8 +96,7 @@
           <span>${I18N.t("tasks.tip")}</span>
         </div>
       </div>
-      ${groupHtml(active, "tasks.active", "bolt")}
-      ${groupHtml(done, "tasks.done", "check")}`;
+      ${catHtml}`;
 
     // запомнить выполнившиеся для следующего рендера (анимация just-done)
     const nowDone = tasks.filter((t) => t.done).map((t) => t.id);
