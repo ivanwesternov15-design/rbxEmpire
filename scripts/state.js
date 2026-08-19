@@ -300,7 +300,7 @@ const State = (function () {
   /* ---------------- рефералы ---------------- */
   function referralLink() {
     const id = TG.getUser().id;
-    return "https://t.me/rbxflare_bot?start=ref_" + id;
+    return "https://t.me/rxgame_bot?start=ref_" + id;
   }
   function referralText() {
     return I18N.t("ref.shared.text") + " " + referralLink();

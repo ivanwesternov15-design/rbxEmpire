@@ -122,7 +122,7 @@
         <div class="text-soft" style="font-size:13px;margin-bottom:12px">${I18N.t("profile.support.sub")}</div>
         <button class="list-row" id="support-bot" style="width:100%;text-align:left">
           <span class="row-icon">${Icons.get("send")}</span>
-          <span><span class="row-title" style="display:block">${I18N.t("profile.support.bot")}</span><span class="row-sub">@rbxflare_bot</span></span>
+          <span><span class="row-title" style="display:block">${I18N.t("profile.support.bot")}</span><span class="row-sub">@rxgame_bot</span></span>
         </button>
         <button class="list-row" id="support-owner" style="width:100%;text-align:left">
           <span class="row-icon">${Icons.get("profile")}</span>
@@ -214,7 +214,7 @@
       });
     }
     const botBtn = sub.querySelector("#support-bot");
-    if (botBtn) botBtn.addEventListener("click", () => TG.openTelegramLink("https://t.me/rbxflare_bot"));
+    if (botBtn) botBtn.addEventListener("click", () => TG.openTelegramLink("https://t.me/rxgame_bot"));
     const ownerBtn = sub.querySelector("#support-owner");
     if (ownerBtn) ownerBtn.addEventListener("click", () => TG.openTelegramLink("tg://user?id=" + TG.OWNER_ID));
     const repoBtn = sub.querySelector("#about-repo");
