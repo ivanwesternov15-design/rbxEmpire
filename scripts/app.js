@@ -10,6 +10,11 @@ if (typeof window === "undefined") {
   const user = TG.init();
   State.load();
 
+  function hideSplash() {
+    const sp = document.getElementById("splash");
+    if (sp) sp.classList.add("splash-hide");
+  }
+
   /* ---------------- диспетчер рендера ---------------- */
   function renderTopbar() {
     const tb = document.getElementById("topbar");
@@ -19,6 +24,8 @@ if (typeof window === "undefined") {
     const name = ((user.firstName || "") + " " + (user.lastName || "")).trim() || "User";
     document.getElementById("topbar-avatar").innerHTML = UI.avatarHtml(user, isHome ? 46 : 38);
     document.getElementById("topbar-name").textContent = name;
+    const uname = user.username ? "@" + user.username : "";
+    document.getElementById("topbar-username").textContent = uname;
     document.getElementById("topbar-id").textContent = "ID: " + user.id;
   }
 
@@ -47,10 +54,16 @@ if (typeof window === "undefined") {
   });
 
   /* ---------------- boot ---------------- */
-  I18N.setLang(State.get().lang);
-  State.updateStreak();
-  Nav.renderNav();
-  Nav.switchTo("home", { force: true });
+  try {
+    I18N.setLang(State.get().lang);
+    State.updateStreak();
+    Nav.renderNav();
+    Nav.switchTo("home", { force: true });
+    requestAnimationFrame(() => setTimeout(hideSplash, 180));
+  } catch (err) {
+    console.error("[rbxflare] boot error:", err);
+    hideSplash();
+  }
 
   // start-параметр реферальной ссылки (ref_123)
   if (State.handleStartParam()) {

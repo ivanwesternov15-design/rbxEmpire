@@ -1,13 +1,22 @@
 /**
- * Навигация: 5 разделов, анимированный индикатор, bottom-sheet выбора категории,
- * SPA-переходы с fade+slide.
+ * Навигация: 5 разделов, «слайм»-индикатор (растягивается под ширину активной
+ * категории, как iOS 26), bottom-sheet выбора категории, SPA-переходы с fade+slide.
  */
 const Nav = (function () {
   const SECTIONS = ["home", "cards", "referrals", "tasks", "profile"];
   const LABEL_KEYS = ["nav.home", "nav.cards", "nav.referrals", "nav.tasks", "nav.profile"];
   const ICONS = ["home", "cards", "referrals", "tasks", "profile"];
+  const ACCENTS = {
+    home: ["#38BDF8", "#0E7490"],
+    cards: ["#A78BFA", "#6D28D9"],
+    referrals: ["#FBBF24", "#B45309"],
+    tasks: ["#34D399", "#047857"],
+    profile: ["#F472B6", "#BE185D"],
+  };
 
   let current = "home";
+  let busy = false;
+  let suppressClick = false;
 
   function sectionEl(name) {
     return document.getElementById("sec-" + name);
@@ -32,15 +41,33 @@ const Nav = (function () {
     const indicator = document.getElementById("nav-indicator");
     const active = nav.querySelector('.nav-item[data-section="' + current + '"]');
     if (!active) return;
-    const center = active.offsetLeft + active.offsetWidth / 2;
-    indicator.style.left = center + "px";
-    indicator.style.transform = "translateX(-50%)";
+    const pad = 10;
+    const left = active.offsetLeft;
+    const width = active.offsetWidth;
+    const center = left + width / 2;
+    indicator.style.left = (center - (width - pad * 2) / 2) + "px";
+    indicator.style.width = (width - pad * 2) + "px";
+    const acc = ACCENTS[current] || ACCENTS.home;
+    indicator.style.setProperty("--nav-color", acc[0]);
+    indicator.style.setProperty("--nav-color-2", acc[1]);
+    indicator.style.setProperty("--nav-glow", hexToRgba(acc[0], 0.4));
+  }
+
+  function hexToRgba(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
   }
 
   function bindLongPress(node, cb) {
     let timer = null;
-    const start = () => {
-      timer = setTimeout(() => cb(), 450);
+    let dragged = false;
+    const start = (e) => {
+      dragged = false;
+      timer = setTimeout(() => {
+        suppressClick = true;
+        setTimeout(() => (suppressClick = false), 600);
+        cb();
+      }, 450);
     };
     const cancel = () => {
       clearTimeout(timer);
@@ -50,11 +77,21 @@ const Nav = (function () {
     node.addEventListener("pointerup", cancel);
     node.addEventListener("pointerleave", cancel);
     node.addEventListener("pointermove", (e) => {
-      if (Math.abs(e.movementX) + Math.abs(e.movementY) > 12) cancel();
+      if (Math.abs(e.movementX) + Math.abs(e.movementY) > 10) {
+        dragged = true;
+        cancel();
+      }
+    });
+    node.addEventListener("click", (e) => {
+      if (suppressClick || dragged) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
     });
   }
 
   function switchTo(name, opts = {}) {
+    if (busy && !opts.force) return;
     if (name === current && !opts.force) {
       sectionEl(name) && sectionEl(name).scrollTo(0, 0);
       return;
@@ -66,16 +103,19 @@ const Nav = (function () {
     const next = sectionEl(name);
     const forward = toIdx > fromIdx;
 
+    busy = true;
+    setTimeout(() => (busy = false), 420);
+
     if (prev) {
       prev.classList.remove("active");
       prev.classList.add("sec-out");
-      setTimeout(() => prev.classList.remove("sec-out"), 220);
+      setTimeout(() => prev.classList.remove("sec-out"), 260);
     }
-    next.classList.remove("sec-out");
+    next.classList.remove("sec-out", "sec-in-left");
     next.classList.add("active");
     void next.offsetWidth;
-    next.classList.add(forward ? "sec-in-left" : "sec-in-left");
-    setTimeout(() => next.classList.remove("sec-in-left"), 280);
+    next.classList.add(forward ? "sec-in-left" : "sec-in");
+    setTimeout(() => next.classList.remove("sec-in-left", "sec-in"), 400);
 
     current = name;
     document.querySelectorAll(".nav-item").forEach((it) => {

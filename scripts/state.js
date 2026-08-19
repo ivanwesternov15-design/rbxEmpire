@@ -339,17 +339,25 @@ const State = (function () {
     const res = await API.friends(me.id);
     if (res && res.ok && Array.isArray(res.friends)) {
       const byId = {};
+      let changed = false;
       data.referrals.forEach((f) => (byId[f.id] = f));
       res.friends.forEach((f) => {
-        if (byId[f.id]) byId[f.id].progress = f.progress || byId[f.id].progress;
-        else {
+        if (byId[f.id]) {
+          if ((f.progress || 0) !== (byId[f.id].progress || 0)) {
+            byId[f.id].progress = f.progress || 0;
+            changed = true;
+          }
+        } else {
           const nf = { id: f.id, name: f.name || "Friend", avatar: f.avatar || "", joinedAt: f.joinedAt || Date.now(), progress: f.progress || 0 };
           data.referrals.unshift(nf);
           byId[f.id] = nf;
+          changed = true;
         }
       });
-      save();
-      emit();
+      if (changed) {
+        save();
+        emit();
+      }
       return true;
     }
     return false;

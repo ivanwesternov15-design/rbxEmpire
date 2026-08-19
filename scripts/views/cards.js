@@ -90,7 +90,7 @@
           .replace("B", c.bonus);
         return `
           <button class="stake-option" data-key="${key}">
-            <span class="stake-icon" style="width:40px;height:40px;border-radius:12px;background:rgba(37,55,69,.7);border:1px solid var(--glass-border-strong);display:flex;align-items:center;justify-content:center;flex-shrink:0">${Icons.get("clock")}</span>
+            <span class="stake-icon" style="width:40px;height:40px;border-radius:12px;background:rgba(22,38,52,.75);border:1px solid var(--glass-border-strong);display:flex;align-items:center;justify-content:center;flex-shrink:0">${Icons.get("clock")}</span>
             <span class="stake-info">
               <span class="stake-duration" style="display:block">${dur.labelKey}</span>
               <span class="stake-bonus">${bonus}</span>

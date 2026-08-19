@@ -6,7 +6,7 @@ const Icons = (function () {
   const S = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
   const icons = {
     home: `<svg ${S}><path d="M3 11.5 12 3l9 8.5"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>`,
-    cards: `<svg ${S}><rect x="3" y="5" width="18" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 18v3"/></svg>`,
+    cards: `<svg ${S}><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><rect x="6" y="6.5" width="12" height="11" rx="1.5"/><path d="m12 8.2.9 2 2 .9-2 .9-.9 2-.9-2-2-.9 2-.9.9-2z"/><path d="M7 15.5c1.4 1.6 3.2 2.4 5 2.4s3.6-.8 5-2.4"/></svg>`,
     referrals: `<svg ${S}><circle cx="9" cy="8" r="3.4"/><path d="M2.5 20c.8-3.2 3.4-5 6.5-5s5.7 1.8 6.5 5"/><path d="M16 4.6a3.4 3.4 0 0 1 0 6.8"/><path d="M18.5 15.4c1.5.9 2.6 2.4 3 4.6"/></svg>`,
     tasks: `<svg ${S}><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M8.5 8h7"/><path d="M8.5 12h7"/><path d="m9 16 1.8 1.8L14.5 14"/></svg>`,
     profile: `<svg ${S}><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/></svg>`,

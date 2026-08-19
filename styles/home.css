@@ -1,4 +1,4 @@
-/* ================= section: Главное ================= */
+﻿/* ================= section: Главное ================= */
 
 .content {
   flex: 1;
@@ -19,7 +19,7 @@
   overflow: hidden;
   padding: 14px 8px 12px;
   border-radius: var(--radius-md);
-  background: rgba(74, 92, 106, 0.4);
+  background: rgba(44, 66, 84, 0.5);
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(var(--glass-blur)) saturate(140%);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
@@ -38,7 +38,7 @@
   font-size: clamp(17px, 4vw, 22px);
   font-weight: 800;
   color: var(--text-main);
-  text-shadow: 0 0 14px rgba(204, 208, 207, 0.25);
+  text-shadow: 0 0 14px rgba(226, 232, 240, 0.28);
   font-variant-numeric: tabular-nums;
 }
 .stat-label { font-size: 11px; font-weight: 600; letter-spacing: 0.4px; color: var(--text-soft); text-transform: uppercase; }
@@ -74,7 +74,7 @@
   user-select: none;
 }
 .daily-card:active { transform: scale(0.94); }
-.daily-card .card-q { font-size: clamp(30px, 7vw, 40px); font-weight: 800; color: rgba(204, 208, 207, 0.35); text-shadow: 0 0 24px rgba(204, 208, 207, 0.15); }
+.daily-card .card-q { font-size: clamp(30px, 7vw, 40px); font-weight: 800; color: rgba(226, 232, 240, 0.38); text-shadow: 0 0 24px rgba(226, 232, 240, 0.18); }
 .daily-card .card-hint { font-size: 10.5px; color: var(--text-dim); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
 .daily-card.locked { opacity: 0.55; pointer-events: none; filter: grayscale(0.6); }
 .daily-card.locked .card-lock { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; color: var(--text-soft); }
@@ -82,7 +82,7 @@
   pointer-events: none;
   padding: 8px;
   border: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 0 26px rgba(204, 208, 207, 0.3);
+  box-shadow: 0 0 26px rgba(226, 232, 240, 0.32);
 }
 .daily-card.revealed img { width: 82%; height: auto; border-radius: 8px; animation: cardPop 500ms var(--ease-spring) both; }
 @keyframes cardPop { 0% { transform: scale(0.4) rotate(-8deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
@@ -98,7 +98,7 @@
   color: var(--text-soft);
   padding: 10px;
   border-radius: 12px;
-  background: rgba(74, 92, 106, 0.3);
+  background: rgba(44, 66, 84, 0.4);
   border: 1px dashed var(--glass-border-strong);
   margin-bottom: 12px;
   font-variant-numeric: tabular-nums;
@@ -114,7 +114,7 @@
   line-height: 1.5;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(17, 33, 45, 0.35);
+  background: rgba(8, 15, 22, 0.4);
   border: 1px solid var(--glass-border);
 }
 .daily-info svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; color: var(--text-soft); }
@@ -133,13 +133,13 @@
   gap: 10px;
   padding: 14px;
   border-radius: var(--radius-md);
-  background: rgba(74, 92, 106, 0.4);
+  background: rgba(44, 66, 84, 0.5);
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(var(--glass-blur)) saturate(140%);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
   transition: transform 180ms var(--ease-out), background 180ms var(--ease-out), box-shadow 200ms var(--ease-out);
 }
-.quick-item:active { transform: scale(0.96); background: rgba(155, 168, 171, 0.2); box-shadow: 0 0 18px rgba(204, 208, 207, 0.12); }
+.quick-item:active { transform: scale(0.96); background: rgba(143, 163, 181, 0.25); box-shadow: 0 0 18px rgba(226, 232, 240, 0.15); }
 .quick-icon {
   width: 40px;
   height: 40px;
@@ -147,7 +147,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(37, 55, 69, 0.7);
+  background: rgba(22, 38, 52, 0.75);
   border: 1px solid var(--glass-border-strong);
   flex-shrink: 0;
 }
@@ -177,7 +177,7 @@
   overflow: hidden;
 }
 .face-back {
-  background: linear-gradient(150deg, rgba(37, 55, 69, 0.9), rgba(17, 33, 45, 0.95));
+  background: linear-gradient(150deg, rgba(22, 38, 52, 0.94), rgba(17, 33, 45, 0.95));
   box-shadow: var(--shadow-panel);
 }
 .face-front { transform: rotateY(180deg); }

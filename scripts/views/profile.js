@@ -153,7 +153,6 @@
     return `
       <div class="about-hero">
         <div class="about-logo">rbx<span>flare</span></div>
-        <div class="about-sub">${I18N.t("about.tagline")}</div>
       </div>
       <div class="panel glass-panel">
         <h2 class="panel-title" style="margin-bottom:14px">${Icons.get("about")}${I18N.t("profile.tabs.about")}</h2>
@@ -167,9 +166,7 @@
         </div>
       </div>
       <div class="about-footer">
-        <span class="badge">${I18N.t("profile.about.version")}: v1.0.0</span>
-        <span class="badge">${I18N.t("profile.about.stack")}: HTML · CSS · JS</span>
-        <button class="btn btn-ghost" id="about-repo">${Icons.get("share")}${I18N.t("profile.about.repo")}</button>
+        <span class="badge">${I18N.t("profile.about.version")}: v1.1.0</span>
       </div>`;
   }
 
@@ -217,8 +214,6 @@
     if (botBtn) botBtn.addEventListener("click", () => TG.openTelegramLink("https://t.me/rxgame_bot"));
     const ownerBtn = sub.querySelector("#support-owner");
     if (ownerBtn) ownerBtn.addEventListener("click", () => TG.openTelegramLink("tg://user?id=" + TG.OWNER_ID));
-    const repoBtn = sub.querySelector("#about-repo");
-    if (repoBtn) repoBtn.addEventListener("click", () => window.open("https://github.com/ivanwesternov15-design/rbxEmpire", "_blank"));
   }
 
   Views.profile = function () {

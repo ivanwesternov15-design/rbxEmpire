@@ -15,8 +15,8 @@ const TG = (function () {
       try {
         webApp.ready();
         webApp.expand();
-        webApp.setHeaderColor && webApp.setHeaderColor("#11212D");
-        webApp.setBackgroundColor && webApp.setBackgroundColor("#11212D");
+        webApp.setHeaderColor && webApp.setHeaderColor("#0B1620");
+        webApp.setBackgroundColor && webApp.setBackgroundColor("#0B1620");
       } catch (e) {}
     }
 

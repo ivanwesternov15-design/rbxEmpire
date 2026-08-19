@@ -362,10 +362,17 @@
   Views.admin = function () {
     const sub = document.getElementById("profile-sub");
     if (!sub) return;
+    const s = State.get();
     sub.innerHTML = `
       <div class="sub-header">
         <button class="back-btn" id="admin-back">${Icons.get("arrow")}${I18N.t("profile.title")}</button>
         <h3>${Icons.get("shield")}${I18N.t("admin.title")}</h3>
+      </div>
+      <div class="admin-stats">
+        <div class="admin-stat">${Icons.get("cards")}<b>${s.inventory.length}</b><span>${I18N.t("cards.title")}</span></div>
+        <div class="admin-stat">${Icons.get("users")}<b>${s.referrals.length}</b><span>${I18N.t("ref.title")}</span></div>
+        <div class="admin-stat">${Icons.get("coin")}<b>${UI.fmt(s.balances.coins)}</b><span>${I18N.t("stats.coins")}</span></div>
+        <div class="admin-stat">${Icons.get("robux")}<b>${UI.fmt(s.balances.robux)}</b><span>${I18N.t("stats.robux")}</span></div>
       </div>
       ${stakingSection()}
       ${chancesSection()}

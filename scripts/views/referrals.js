@@ -13,21 +13,68 @@
   }
 
   function stopSpin(sec) {
-    const sp = sec && sec.querySelector(".spinner");
-    if (sp) sp.classList.add("hidden");
+    const sp = sec && sec.querySelector("#ref-refresh");
+    if (sp) sp.classList.remove("spinning");
+  }
+
+  function friendRowHtml(f) {
+    const progress = Math.min(f.progress || 0, 7);
+    const name = f.name || "User";
+    const initials = (name[0] || "?").toUpperCase();
+    const avatar = f.avatar
+      ? `<div class="avatar"><img src="${f.avatar}" alt="" onerror="this.parentElement.classList.add('avatar-initials');this.remove()"></div>`
+      : `<div class="avatar avatar-initials">${initials}</div>`;
+    return `
+      <div class="list-row friend-row">
+        ${avatar}
+        <div class="friend-progress">
+          <div class="fp-top">
+            <span class="fp-name">${name}</span>
+            <span class="fp-count">${progress} / 7 ${I18N.t("ref.tasks.of")}</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width:${(progress / 7) * 100}%"></div></div>
+        </div>
+        <span class="friend-days">${UI.daysAgo(f.joinedAt)} ${I18N.t("ref.days.ago")}</span>
+      </div>`;
+  }
+
+  function friendsListHtml(s) {
+    if (s.referrals.length === 0) {
+      return `
+        <div class="empty-state">
+          ${Icons.get("gift")}
+          <div class="empty-title">${I18N.t("ref.empty.title")}</div>
+          <div class="empty-sub">${I18N.t("ref.empty.sub")}</div>
+        </div>`;
+    }
+    return s.referrals.map(friendRowHtml).join("");
+  }
+
+  /* точечное обновление списка друзей без полного пере-рендера */
+  function updateFriendsList(sec) {
+    if (!sec) return;
+    const list = sec.querySelector("#ref-friends-list");
+    if (!list) return;
+    const s = State.get();
+    list.innerHTML = friendsListHtml(s);
+    const count = sec.querySelector("#ref-count");
+    if (count) count.textContent = String(s.referrals.length);
   }
 
   async function doRefresh() {
     if (refreshing) return;
     refreshing = true;
     const sec = document.getElementById("sec-referrals");
-    const sp = sec && sec.querySelector(".spinner");
-    if (sp) sp.classList.remove("hidden");
+    const btn = sec && sec.querySelector("#ref-refresh");
+    if (btn) btn.classList.add("spinning");
     await State.flushPendingReferral();
     const ok = await State.syncFriends();
     refreshing = false;
+    if (ok && Nav.currentSection() === "referrals") {
+      /* если syncFriends не эмитил (изменений нет) — обновляем список сами */
+      updateFriendsList(sec);
+    }
     stopSpin(sec);
-    if (ok && Nav.currentSection() === "referrals") Views.render("referrals");
   }
 
   function bindShareCopy(sec) {
@@ -55,27 +102,6 @@
     }
   }
 
-  function friendRowHtml(f) {
-    const progress = Math.min(f.progress || 0, 7);
-    const name = f.name || "User";
-    const initials = (name[0] || "?").toUpperCase();
-    const avatar = f.avatar
-      ? `<div class="avatar"><img src="${f.avatar}" alt="" onerror="this.parentElement.classList.add('avatar-initials');this.remove()"></div>`
-      : `<div class="avatar avatar-initials">${initials}</div>`;
-    return `
-      <div class="list-row friend-row">
-        ${avatar}
-        <div class="friend-progress">
-          <div class="fp-top">
-            <span class="fp-name">${name}</span>
-            <span class="fp-count">${progress} / 7 ${I18N.t("ref.tasks.of")}</span>
-          </div>
-          <div class="progress-track"><div class="progress-fill" style="width:${(progress / 7) * 100}%"></div></div>
-        </div>
-        <span class="friend-days">${UI.daysAgo(f.joinedAt)} ${I18N.t("ref.days.ago")}</span>
-      </div>`;
-  }
-
   Views.referrals = function () {
     stopTimers();
     const s = State.get();
@@ -83,25 +109,13 @@
     const count = s.referrals.length;
     const link = State.referralLink();
 
-    let friendsHtml;
-    if (count === 0) {
-      friendsHtml = `
-        <div class="empty-state">
-          ${Icons.get("gift")}
-          <div class="empty-title">${I18N.t("ref.empty.title")}</div>
-          <div class="empty-sub">${I18N.t("ref.empty.sub")}</div>
-        </div>`;
-    } else {
-      friendsHtml = s.referrals.map(friendRowHtml).join("");
-    }
-
     sec.innerHTML = `
       <div class="panel glass-panel">
         <div class="panel-header">
           <h2 class="panel-title">${Icons.get("referrals")}${I18N.t("ref.title")}</h2>
-          <button class="icon-btn spinner" id="ref-refresh" title="${I18N.t("ref.refresh")}">${Icons.get("refresh")}</button>
+          <button class="icon-btn" id="ref-refresh" title="${I18N.t("ref.refresh")}">${Icons.get("refresh")}</button>
         </div>
-        <div class="text-dim" style="font-size:13px;margin-bottom:14px">${count} ${I18N.t("ref.count")}</div>
+        <div class="text-dim" style="font-size:13px;margin-bottom:14px"><span id="ref-count">${count}</span> ${I18N.t("ref.count")}</div>
 
         <div style="margin-bottom:14px">
           <div class="text-soft" style="font-size:13px;font-weight:700;margin-bottom:8px">${I18N.t("ref.link.title")}</div>
@@ -128,7 +142,7 @@
         <div class="panel-header">
           <h2 class="panel-title">${Icons.get("users")}${I18N.t("ref.friends")}</h2>
         </div>
-        ${friendsHtml}
+        <div id="ref-friends-list">${friendsListHtml(s)}</div>
       </div>`;
 
     bindShareCopy(sec);
