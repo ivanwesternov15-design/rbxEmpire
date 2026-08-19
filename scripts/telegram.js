@@ -122,17 +122,24 @@ const TG = (function () {
 
   function shareLink(url, text) {
     haptic("light");
+    // 1) нативная шторка шаринга внутри Telegram — мини-апп остаётся открытым
     if (webApp && webApp.shareURL) {
       try {
         webApp.shareURL(url, text);
         return;
       } catch (e) {}
     }
-    if (webApp && webApp.openTelegramLink) {
+    // 2) Web Share API (мобильные браузеры)
+    if (navigator.share && navigator.canShare) {
       try {
-        webApp.openTelegramLink(
-          "https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(text)
-        );
+        navigator.share({ title: "rbxflare", text: text, url: url });
+        return;
+      } catch (e) {}
+    }
+    // 3) внешний браузер — мини-апп не сворачивается и не закрывается
+    if (webApp && webApp.openLink) {
+      try {
+        webApp.openLink("https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(text), { try_instant_view: false });
         return;
       } catch (e) {}
     }
@@ -140,16 +147,10 @@ const TG = (function () {
   }
 
   function openTelegramLink(url) {
+    // Внешняя ссылка открывается во внешнем браузере: мини-апп остаётся открытым
+    // (openTelegramLink на части клиентов полностью закрывает WebApp — не используем).
     if (webApp) {
       try {
-        // мобильные клиенты: открытие ссылки внутри Telegram сворачивает апп в фон (не закрывает)
-        const platform = (webApp.platform || "").toLowerCase();
-        const mobile = platform === "android" || platform === "ios";
-        if (mobile) {
-          webApp.openTelegramLink(url);
-          return;
-        }
-        // десктоп / web: внешний браузер — мини-апп остаётся открытым
         webApp.openLink(url, { try_instant_view: false });
         return;
       } catch (e) {}
