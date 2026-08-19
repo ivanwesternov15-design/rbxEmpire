@@ -129,10 +129,16 @@ const TG = (function () {
     done();
   }
 
+  function isMobilePlatform() {
+    const webApp = getWebApp();
+    const platform = ((webApp && webApp.platform) || "").toLowerCase();
+    return platform === "android" || platform === "ios";
+  }
+
   function shareLink(url, text) {
     haptic("light");
     const webApp = getWebApp();
-    // 1) нативная шторка шаринга внутри Telegram — мини-апп остаётся открытым
+    // 1) нативная шторка шаринга внутри Telegram — мини-апп вообще не сворачивается
     if (webApp && webApp.shareURL) {
       try {
         webApp.shareURL(url, text);
@@ -142,26 +148,35 @@ const TG = (function () {
     // 2) Web Share API (мобильные браузеры)
     if (navigator.share && navigator.canShare) {
       try {
-        navigator.share({ title: "rbxflare", text: text, url: url });
+        navigator.share({ title: "Rbx Game", text: text, url: url });
         return;
       } catch (e) {}
     }
-    // 3) внешний браузер — мини-апп не сворачивается и не закрывается
-    if (webApp && webApp.openLink) {
+    const shareUrl = "https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(text);
+    // 3) мобильные клиенты: открытие внутри Telegram — мини-апп сворачивается в фон (не закрывается)
+    if (webApp) {
       try {
-        webApp.openLink("https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(text), { try_instant_view: false });
+        if (isMobilePlatform() && webApp.openTelegramLink) {
+          webApp.openTelegramLink(shareUrl);
+          return;
+        }
+        webApp.openLink(shareUrl, { try_instant_view: false });
         return;
       } catch (e) {}
     }
-    window.open("https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(text), "_blank");
+    window.open(shareUrl, "_blank");
   }
 
   function openTelegramLink(url) {
-    // Внешняя ссылка открывается во внешнем браузере: мини-апп остаётся открытым
-    // (openTelegramLink на части клиентов полностью закрывает WebApp — не используем).
     const webApp = getWebApp();
     if (webApp) {
       try {
+        // мобильные клиенты: открытие внутри Telegram, мини-апп уходит в фон (не закрывается)
+        if (isMobilePlatform() && webApp.openTelegramLink) {
+          webApp.openTelegramLink(url);
+          return;
+        }
+        // десктоп / web: внешний браузер — мини-апп остаётся открытым
         webApp.openLink(url, { try_instant_view: false });
         return;
       } catch (e) {}
