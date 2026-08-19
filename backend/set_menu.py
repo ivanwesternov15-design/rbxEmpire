@@ -1,28 +1,21 @@
-# Запустить один раз, чтобы повесить кнопку Mini App в чате с ботом:
-#   cd backend && python set_menu.py
-import os
+"""Одноразовая установка кнопки меню у бота (необязательно: main.py делает это сам)."""
+import sys
+from pathlib import Path
 
-import requests
-from dotenv import load_dotenv
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import app as rbx  # noqa: E402
 
-load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+APP_URL = rbx.env("APP_URL").strip() or ("https://" + rbx.env("DOMAIN").strip().rstrip("/"))
+APP_URL = APP_URL.rstrip("/") + "/"
 
-TOKEN = os.getenv("BOT_TOKEN", "")
-URL = os.getenv("APP_URL", "").rstrip("/") + "/"
-
-if not TOKEN or URL.startswith("https://your-domain"):
-    print("Сначала заполни BOT_TOKEN и APP_URL в backend/.env")
-    raise SystemExit(1)
-
-resp = requests.post(
-    f"https://api.telegram.org/bot{TOKEN}/setChatMenuButton",
-    json={
+res = rbx.tg_api(
+    "setChatMenuButton",
+    payload={
         "menu_button": {
             "type": "web_app",
-            "text": "rbxflare",
-            "web_app": {"url": URL},
+            "text": "🎴 rbxflare",
+            "web_app": {"url": APP_URL},
         }
     },
-    timeout=15,
 )
-print(resp.json())
+print("setChatMenuButton ->", bool(res and res.get("ok")), "|", APP_URL)

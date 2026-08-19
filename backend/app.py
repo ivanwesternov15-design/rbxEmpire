@@ -1,16 +1,12 @@
 """
-rbxflare — минимальный бэкенд (Python 3.11 + Flask).
+rbxflare — минимальный бэкенд. Только стандартная библиотека Python (без pip-зависимостей).
 
-Назначение на этом этапе:
-1. Валидация Telegram initData (проверка подписи HMAC-SHA256).
+1. Валидация Telegram initData (HMAC-SHA256, свежесть <= 24ч).
 2. Отдача статики фронтенда (index.html, styles/, scripts/, assets/).
-3. Получение bio пользователя через Bot API getChat.
-4. Рефералы: запись друга + выдача списка друзей (реальное время между устройствами).
+3. bio пользователя через Bot API getChat.
+4. Рефералы: запись друга + выдача списка (real-time между устройствами).
 
-Запуск:
-    cd backend
-    pip install -r requirements.txt
-    python app.py
+Запуск: python main.py (поднимает и HTTP-сервер, и поллинг бота).
 """
 import hashlib
 import hmac
@@ -18,18 +14,36 @@ import json
 import os
 import time
 import urllib.parse
-
-from dotenv import load_dotenv
-from flask import Flask, jsonify, request
-import requests
+import urllib.request
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONT_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
 DATA_DIR = os.getenv("DATA_DIR", os.path.join(BASE_DIR, "data"))
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
 
-load_dotenv(os.path.join(BASE_DIR, ".env"))
-BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+
+# ---------------------------------------------------------------- env
+def _load_dotenv(path: str) -> dict:
+    out = {}
+    if not os.path.exists(path):
+        return out
+    for line in open(path, encoding="utf-8"):
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        out[key.strip()] = value.strip()
+    return out
+
+
+_LOCAL_ENV = _load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+
+def env(key: str, default: str = "") -> str:
+    return os.getenv(key, _LOCAL_ENV.get(key, default))
+
+
+BOT_TOKEN = env("BOT_TOKEN")
 
 
 # ---------------------------------------------------------------- initData
@@ -44,7 +58,7 @@ def _parse_init_data(init_data: str) -> dict:
 
 
 def validate_init_data(init_data: str):
-    """Возвращает dict с данными пользователя или None, если подпись неверна/протухла."""
+    """dict с пользователем или None, если подпись неверна или протухла."""
     if not init_data or not BOT_TOKEN:
         return None
     try:
@@ -56,10 +70,33 @@ def validate_init_data(init_data: str):
         if not hmac.compare_digest(calc_hash, received_hash):
             return None
         auth_date = int(data.get("auth_date", 0))
-        if time.time() - auth_date > 86400:  # старше суток — не принимаем
+        if time.time() - auth_date > 86400:
             return None
         user = json.loads(data.get("user", "{}"))
         return user or None
+    except Exception:
+        return None
+
+
+# ---------------------------------------------------------------- Telegram API (urllib)
+def tg_api(method: str, params: dict = None, payload: dict = None):
+    """Возвращает распарсенный JSON ответа Bot API или None при ошибке."""
+    if not BOT_TOKEN:
+        return None
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
+    if payload is not None:
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+    else:
+        qs = urllib.parse.urlencode(params or {})
+        req = urllib.request.Request(url + (("?" + qs) if qs else ""), method="GET")
+    try:
+        with urllib.request.urlopen(req, timeout=35) as resp:
+            return json.loads(resp.read().decode("utf-8"))
     except Exception:
         return None
 
@@ -81,78 +118,88 @@ def _save_users(users: dict) -> None:
         json.dump(users, f, ensure_ascii=False, indent=2)
 
 
-app = Flask(__name__, static_folder=FRONT_DIR, static_url_path="")
+# ---------------------------------------------------------------- API-эндпоинты
+def handle_api(method: str, path: str, body_bytes: bytes):
+    """Возвращает (status, dict) для JSON-ответа."""
+    if method == "POST" and path == "/api/validate":
+        try:
+            body = json.loads(body_bytes or b"{}")
+        except Exception:
+            body = {}
+        user = validate_init_data(body.get("initData", ""))
+        if not user:
+            return 401, {"ok": False, "error": "invalid initData"}
+        return 200, {"ok": True, "user": user}
+
+    if method == "POST" and path == "/api/referral":
+        try:
+            body = json.loads(body_bytes or b"{}")
+        except Exception:
+            body = {}
+        referrer_id = body.get("referrerId")
+        friend = body.get("friend") or {}
+        if not referrer_id or not friend.get("id"):
+            return 400, {"ok": False, "error": "missing fields"}
+        users = _load_users()
+        record = users.setdefault(str(referrer_id), {"friends": []})
+        fid = str(friend["id"])
+        if not any(f.get("id") == fid for f in record["friends"]):
+            record["friends"].append(
+                {
+                    "id": fid,
+                    "name": friend.get("name", ""),
+                    "avatar": friend.get("avatar", ""),
+                    "joinedAt": int(time.time()),
+                    "progress": 0,
+                }
+            )
+            _save_users(users)
+        return 200, {"ok": True}
+
+    if method == "GET" and path.startswith("/api/user/") and path.endswith("/bio"):
+        uid = path[len("/api/user/") : -len("/bio")]
+        if not uid.isdigit():
+            return 400, {"ok": False, "error": "bad uid"}
+        data = tg_api("getChat", params={"chat_id": uid})
+        if data and data.get("ok"):
+            return 200, {"ok": True, "bio": data.get("result", {}).get("bio", "")}
+        return 200, {"ok": False, "bio": ""}
+
+    if method == "GET" and path.startswith("/api/referrals/"):
+        uid = path[len("/api/referrals/") :]
+        if not uid.isdigit():
+            return 400, {"ok": False, "error": "bad uid"}
+        users = _load_users()
+        friends = users.get(uid, {}).get("friends", [])
+        return 200, {"ok": True, "friends": friends}
+
+    return 404, {"ok": False, "error": "not found"}
 
 
-@app.route("/")
-def index():
-    return app.send_static_file("index.html")
+# ---------------------------------------------------------------- статика
+MIME = {
+    ".html": "text/html; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".js": "application/javascript; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".png": "image/png",
+    ".svg": "image/svg+xml",
+    ".ico": "image/x-icon",
+    ".webmanifest": "application/manifest+json",
+    ".md": "text/plain; charset=utf-8",
+}
 
 
-@app.post("/api/validate")
-def api_validate():
-    body = request.get_json(silent=True) or {}
-    user = validate_init_data(body.get("initData", ""))
-    if not user:
-        return jsonify({"ok": False, "error": "invalid initData"}), 401
-    return jsonify({"ok": True, "user": user})
-
-
-@app.get("/api/user/<int:uid>/bio")
-def api_bio(uid):
-    if not BOT_TOKEN:
-        return jsonify({"ok": False, "bio": ""})
-    try:
-        resp = requests.get(
-            f"https://api.telegram.org/bot{BOT_TOKEN}/getChat",
-            params={"chat_id": uid},
-            timeout=8,
-        )
-        data = resp.json()
-        if data.get("ok"):
-            return jsonify({"ok": True, "bio": data.get("result", {}).get("bio", "")})
-    except Exception:
-        pass
-    return jsonify({"ok": False, "bio": ""})
-
-
-@app.get("/api/referrals/<int:uid>")
-def api_referrals(uid):
-    users = _load_users()
-    friends = users.get(str(uid), {}).get("friends", [])
-    return jsonify({"ok": True, "friends": friends})
-
-
-@app.post("/api/referral")
-def api_referral():
-    body = request.get_json(silent=True) or {}
-    referrer_id = body.get("referrerId")
-    friend = body.get("friend") or {}
-    if not referrer_id or not friend.get("id"):
-        return jsonify({"ok": False, "error": "missing fields"}), 400
-    users = _load_users()
-    record = users.setdefault(str(referrer_id), {"friends": []})
-    fid = str(friend["id"])
-    if not any(f.get("id") == fid for f in record["friends"]):
-        record["friends"].append(
-            {
-                "id": fid,
-                "name": friend.get("name", ""),
-                "avatar": friend.get("avatar", ""),
-                "joinedAt": int(time.time()),
-                "progress": 0,
-            }
-        )
-        _save_users(users)
-    return jsonify({"ok": True})
-
-
-@app.errorhandler(404)
-def not_found(_e):
-    return jsonify({"ok": False, "error": "not found"}), 404
-
-
-if __name__ == "__main__":
-    os.makedirs(DATA_DIR, exist_ok=True)
-    port = int(os.getenv("PORT", "8080"))
-    app.run(host="0.0.0.0", port=port, debug=False)
+def serve_static(path: str):
+    """Возвращает (status, body_bytes, content_type)."""
+    if path in ("", "/"):
+        path = "/index.html"
+    rel = urllib.parse.unquote(path.lstrip("/"))
+    full = os.path.abspath(os.path.join(FRONT_DIR, rel))
+    if full != FRONT_DIR and not full.startswith(FRONT_DIR + os.sep):
+        return 403, b"", "text/plain"
+    if not os.path.isfile(full):
+        return 404, b"", "text/plain"
+    ext = os.path.splitext(full)[1].lower()
+    with open(full, "rb") as f:
+        return 200, f.read(), MIME.get(ext, "application/octet-stream")

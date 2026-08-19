@@ -1,29 +1,20 @@
-"""BotHost entry: Flask (статический фронтенд + API) + поллинг бота.
+"""BotHost entry: HTTP-сервер (статический фронтенд + JSON API) + поллинг бота.
 
-Отвечает на /start приветствием с кнопкой открытия Mini App,
-при старте вешает кнопку меню (setChatMenuButton).
-Start command для BotHost: `python main.py` (рабочая директория: backend/).
+Отвечает на /start приветствием с кнопкой открытия Mini App, при старте вешает
+кнопку меню (setChatMenuButton). Только стандартная библиотека Python.
+Start command для BotHost: `cd backend && python main.py` (файл-обёртка в корне репо).
 """
+import json
 import os
 import threading
 import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-import requests
-from dotenv import load_dotenv
+import app as rbx
 
-from app import app as flask_app
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-load_dotenv(os.path.join(BASE_DIR, ".env"))
-
-BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
-APP_URL = (
-    os.getenv("APP_URL", "").strip()
-    or ("https://" + os.getenv("DOMAIN", "").strip().rstrip("/"))
-    or ""
-)
+BOT_TOKEN = rbx.env("BOT_TOKEN")
+APP_URL = rbx.env("APP_URL").strip() or ("https://" + rbx.env("DOMAIN").strip().rstrip("/"))
 APP_URL = APP_URL.rstrip("/") + "/"
-API_URL = "https://api.telegram.org/bot" + BOT_TOKEN
 
 WELCOME_TEXT = (
     "Добро пожаловать в rbxflare! 🎴\n"
@@ -32,25 +23,19 @@ WELCOME_TEXT = (
 )
 
 
-def api(method, **params):
-    try:
-        r = requests.post(API_URL + "/" + method, json=params, timeout=25)
-        return r.json()
-    except Exception as exc:
-        print(f"[bot] {method} error: {exc}", flush=True)
-        return {"ok": False}
-
-
+# ---------------------------------------------------------------- бот
 def set_menu_button():
-    res = api(
+    res = rbx.tg_api(
         "setChatMenuButton",
-        menu_button={
-            "type": "web_app",
-            "text": "🎴 rbxflare",
-            "web_app": {"url": APP_URL},
+        payload={
+            "menu_button": {
+                "type": "web_app",
+                "text": "🎴 rbxflare",
+                "web_app": {"url": APP_URL},
+            }
         },
     )
-    print("[bot] setChatMenuButton ->", res.get("ok"), flush=True)
+    print("[bot] setChatMenuButton ->", bool(res and res.get("ok")), flush=True)
 
 
 def handle_update(upd):
@@ -66,14 +51,16 @@ def handle_update(upd):
         payload = text.split(" ", 1)[1] if " " in text else ""
         if payload and not payload.startswith("ref_"):
             reply = "Скоро будет готово! 🔨\n\n" + reply
-    api(
+    rbx.tg_api(
         "sendMessage",
-        chat_id=chat_id,
-        text=reply,
-        reply_markup={
-            "inline_keyboard": [
-                [{"text": "🎴 Открыть rbxflare", "web_app": {"url": APP_URL}}]
-            ]
+        payload={
+            "chat_id": chat_id,
+            "text": reply,
+            "reply_markup": {
+                "inline_keyboard": [
+                    [{"text": "🎴 Открыть rbxflare", "web_app": {"url": APP_URL}}]
+                ]
+            },
         },
     )
 
@@ -82,36 +69,75 @@ def poll_loop():
     set_menu_button()
     offset = 0
     while True:
-        try:
-            r = requests.get(
-                API_URL + "/getUpdates",
-                params={"offset": offset, "timeout": 25},
-                timeout=35,
-            )
-            data = r.json()
-            if not data.get("ok"):
-                print("[bot] getUpdates not ok:", data, flush=True)
-                time.sleep(5)
-                continue
-            for upd in data.get("result", []):
-                offset = upd["update_id"] + 1
-                try:
-                    handle_update(upd)
-                except Exception as exc:
-                    print("[bot] update error:", exc, flush=True)
-        except Exception as exc:
-            print("[bot] polling error:", exc, flush=True)
-            time.sleep(3)
+        data = rbx.tg_api("getUpdates", params={"offset": offset, "timeout": 25})
+        if not data:
+            time.sleep(5)
+            continue
+        if not data.get("ok"):
+            print("[bot] getUpdates not ok:", data, flush=True)
+            time.sleep(5)
+            continue
+        for upd in data.get("result", []):
+            offset = upd["update_id"] + 1
+            try:
+                handle_update(upd)
+            except Exception as exc:
+                print("[bot] update error:", exc, flush=True)
+
+
+# ---------------------------------------------------------------- HTTP
+class Handler(BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+
+    def log_message(self, fmt, *args):
+        print("[http]", fmt % args, flush=True)
+
+    def _json(self, status, payload):
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _file(self, status, body, ctype):
+        self.send_response(status)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self):
+        path = self.path.split("?", 1)[0]
+        if path.startswith("/api/"):
+            status, payload = rbx.handle_api("GET", path, b"")
+            self._json(status, payload)
+            return
+        status, body, ctype = rbx.serve_static(path)
+        if status != 200:
+            self._json(status, {"ok": False, "error": "not found"})
+            return
+        self._file(status, body, ctype)
+
+    def do_POST(self):
+        path = self.path.split("?", 1)[0]
+        length = int(self.headers.get("Content-Length") or 0)
+        body = self.rfile.read(length) if length else b""
+        status, payload = rbx.handle_api("POST", path, body)
+        self._json(status, payload)
 
 
 def main():
     if not BOT_TOKEN:
-        print("BOT_TOKEN не задан в backend/.env — останов.", flush=True)
+        print("BOT_TOKEN не задан (переменная окружения или backend/.env) — останов.", flush=True)
         return
     threading.Thread(target=poll_loop, daemon=True).start()
-    port = int(os.getenv("PORT", "8080"))
-    print(f"[rbxflare] Flask on :{port}, frontend: {APP_URL}", flush=True)
-    flask_app.run(host="0.0.0.0", port=port, debug=False)
+    port = int(rbx.env("PORT", "8080"))
+    server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
+    print(f"[rbxflare] HTTP on :{port}, frontend: {APP_URL}", flush=True)
+    server.serve_forever()
 
 
 if __name__ == "__main__":

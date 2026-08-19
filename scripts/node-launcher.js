@@ -1,6 +1,6 @@
 /**
  * Общий лаунчер для Node-запуска (BotHost исполняет start command через node).
- * Поднимает Python-бэкенд: проверяет зависимости, запускает backend/main.py.
+ * Бэкенд использует только стандартную библиотеку Python — запускаем напрямую.
  * @param {string} rootDir - корень репозитория (для вычисления backend/)
  */
 module.exports = function launch(rootDir) {
@@ -8,15 +8,6 @@ module.exports = function launch(rootDir) {
   const path = require("path");
   const backendDir = path.join(rootDir, "backend");
   const py = process.env.PYTHON || (spawnSync("python3", ["--version"]).error ? "python" : "python3");
-
-  const deps = spawnSync(py, ["-c", "import flask, requests, dotenv"], { encoding: "utf8" });
-  if (deps.status !== 0) {
-    process.stdout.write("[rbxflare] установка зависимостей backend/requirements.txt...\n");
-    const inst = spawnSync(py, ["-m", "pip", "install", "-r", path.join(backendDir, "requirements.txt")], { stdio: "inherit" });
-    if (inst.status !== 0) {
-      process.stderr.write("[rbxflare] pip install завершился с ошибкой\n");
-    }
-  }
 
   const child = spawn(py, ["main.py"], { cwd: backendDir, stdio: "inherit" });
   child.on("error", (e) => {
