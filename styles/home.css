@@ -143,7 +143,7 @@
 }
 .daily-card.revealed img { width: 82%; height: auto; border-radius: 8px; margin-top: 10px; animation: cardPop 500ms var(--ease-spring) both; }
 @keyframes cardPop { 0% { transform: scale(0.4) rotate(-8deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
-.daily-card.revealed .daily-rarity { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-top: -3px; }
+.daily-card.revealed .daily-rarity { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-top: -13px; }
 .daily-card.revealed .card-q, .daily-card.revealed .card-hint { display: none; }
 
 .daily-countdown {
