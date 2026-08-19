@@ -4,10 +4,17 @@
  * чтобы можно было тестировать админ-панель.
  */
 const TG = (function () {
-  const webApp = (typeof window !== "undefined" && window.Telegram && window.Telegram.WebApp) || null;
   const OWNER_ID = 8414792453;
   let user = null;
-  let isRealTelegram = false;
+
+  /* WebApp-объект появляется после загрузки telegram-web-app.js — берём лениво */
+  function getWebApp() {
+    return (typeof window !== "undefined" && window.Telegram && window.Telegram.WebApp) || null;
+  }
+
+  function isRealTelegram() {
+    return !!getWebApp();
+  }
 
   /* парсинг initData вручную (резерв, если initDataUnsafe не заполнен клиентом) */
   function parseInitData(raw) {
@@ -36,7 +43,7 @@ const TG = (function () {
   }
 
   function init() {
-    isRealTelegram = !!webApp;
+    const webApp = getWebApp();
     if (webApp) {
       try {
         webApp.ready();
@@ -78,7 +85,8 @@ const TG = (function () {
 
   /* некоторые клиенты Telegram заполняют данные чуть позже — пробуем дозагрузить */
   function retryUser() {
-    if (!webApp || !isRealTelegram || !user || (user.id && user.id !== 0)) return;
+    const webApp = getWebApp();
+    if (!webApp || !user || (user.id && user.id !== 0)) return;
     const raw = webApp.initDataUnsafe || null;
     const u = (raw && raw.user) || parseInitData(webApp.initData || "");
     if (u && u.id) {
@@ -89,10 +97,11 @@ const TG = (function () {
   }
 
   function hasUserData() {
-    return isRealTelegram && !!user && !!user.id;
+    return isRealTelegram() && !!user && !!user.id;
   }
 
   function haptic(type) {
+    const webApp = getWebApp();
     if (!webApp || !webApp.HapticFeedback) return;
     try {
       if (type === "success") webApp.HapticFeedback.notificationOccurred("success");
@@ -122,6 +131,7 @@ const TG = (function () {
 
   function shareLink(url, text) {
     haptic("light");
+    const webApp = getWebApp();
     // 1) нативная шторка шаринга внутри Telegram — мини-апп остаётся открытым
     if (webApp && webApp.shareURL) {
       try {
@@ -149,6 +159,7 @@ const TG = (function () {
   function openTelegramLink(url) {
     // Внешняя ссылка открывается во внешнем браузере: мини-апп остаётся открытым
     // (openTelegramLink на части клиентов полностью закрывает WebApp — не используем).
+    const webApp = getWebApp();
     if (webApp) {
       try {
         webApp.openLink(url, { try_instant_view: false });
@@ -159,10 +170,12 @@ const TG = (function () {
   }
 
   function getInitData() {
+    const webApp = getWebApp();
     return webApp ? webApp.initData : "";
   }
 
   function setBgColor(color) {
+    const webApp = getWebApp();
     if (webApp && webApp.setBackgroundColor) {
       try { webApp.setBackgroundColor(color); } catch (e) {}
     }
@@ -179,7 +192,7 @@ const TG = (function () {
     openTelegramLink,
     getInitData,
     setBgColor,
-    isTelegram: () => isRealTelegram,
+    isTelegram: () => isRealTelegram(),
     OWNER_ID,
   };
 })();
