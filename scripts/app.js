@@ -2,7 +2,16 @@
  * Точка входа: инициализация, глобальные слушатели, рендер-диспетчер.
  */
 if (typeof window === "undefined") {
-  // Запуск вне браузера (например, случайный `node scripts/app.js` при сборке) — выходим без ошибки.
+  // Бот-хостинг запустил этот файл как Node-приложение (node scripts/app.js).
+  // Настоящий бэкенд — Python: поднимаем его как дочерний процесс.
+  const { spawn, spawnSync } = require("child_process");
+  const path = require("path");
+  const backendDir = path.join(__dirname, "..", "backend");
+  const py = process.env.PYTHON || (spawnSync("python3", ["--version"]).error ? "python" : "python3");
+  const child = spawn(py, ["main.py"], { cwd: backendDir, stdio: "inherit" });
+  child.on("exit", (code) => process.exit(code == null ? 0 : code));
+  process.on("SIGTERM", () => child.kill("SIGTERM"));
+  process.on("SIGINT", () => child.kill("SIGINT"));
 } else {
 (function () {
   const user = TG.init();
