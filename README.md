@@ -26,6 +26,7 @@ scripts/
 assets/                   — PNG карточек (Basic…Mythic) и иконок (robux/coins/streak)
 backend/
   app.py                  — Flask: валидация initData, bio, рефералы, статика
+  main.py                 — entry point для BotHost: Flask + поллинг бота (/start, кнопка меню)
   requirements.txt
   set_menu.py             — вешает кнопку Mini App на бота (запустить один раз)
 ```
@@ -47,8 +48,8 @@ backend/
 ```bash
 cd backend
 pip install -r requirements.txt
-python app.py            # http://localhost:8080
-python set_menu.py       # один раз: кнопка Mini App у бота
+python main.py            # Flask :8080 + поллинг бота (отвечает на /start)
+python set_menu.py        # один раз: кнопка Mini App у бота
 ```
 Секреты — только в `backend/.env` (в git не попадает, см. `.gitignore`).
 Токен бота, показанный в переписке, считается скомпрометированным:
@@ -56,5 +57,11 @@ python set_menu.py       # один раз: кнопка Mini App у бота
 
 ## Деплой (BotHost)
 1. Подключить репозиторий `ivanwesternov15-design/rbxEmpire`, ветка `main`.
-2. Start command: `python app.py` (рабочая директория `backend/`), PORT из переменных окружения.
+2. **Start command: `python main.py`** (рабочая директория `backend/`), PORT из переменных окружения.
 3. В `@BotFather` указать Domain и Menu Button → `https://ваш-домен/`.
+4. `main.py` при старте сам вешает кнопку меню на бота и отвечает на `/start`
+   приветствием с кнопкой «Открыть rbxflare».
+
+> ⚠️ Не запускайте фронтенд через Node (`node scripts/app.js`) — это браузерные скрипты.
+> При случайном запуске в Node они безопасно выходят без ошибок, но сервер/бот запускаются
+> только через `python main.py` (директория `backend/`).

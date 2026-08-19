@@ -4,7 +4,7 @@
  * чтобы можно было тестировать админ-панель.
  */
 const TG = (function () {
-  const webApp = (window.Telegram && window.Telegram.WebApp) || null;
+  const webApp = (typeof window !== "undefined" && window.Telegram && window.Telegram.WebApp) || null;
   const OWNER_ID = 8414792453;
   let user = null;
   let isRealTelegram = false;

@@ -1,6 +1,9 @@
 /**
  * Точка входа: инициализация, глобальные слушатели, рендер-диспетчер.
  */
+if (typeof window === "undefined") {
+  // Запуск вне браузера (например, случайный `node scripts/app.js` при сборке) — выходим без ошибки.
+} else {
 (function () {
   const user = TG.init();
   State.load();
@@ -68,3 +71,4 @@
 
   window.addEventListener("resize", () => Nav.updateIndicator());
 })();
+}
