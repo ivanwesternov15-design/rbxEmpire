@@ -102,9 +102,9 @@
 /* «слайм»-индикатор: растягивается под ширину активной категории */
 .bottomnav-indicator {
   position: absolute;
-  top: 6px;
-  height: calc(100% - 12px);
-  border-radius: 16px;
+  top: 5px;
+  height: calc(100% - 10px);
+  border-radius: 22px;
   background: linear-gradient(135deg, var(--nav-color, rgba(74, 92, 106, 0.5)), var(--nav-color-2, rgba(37, 55, 69, 0.55)));
   border: 1px solid rgba(143, 163, 181, 0.28);
   box-shadow: 0 0 18px var(--nav-glow, rgba(143, 163, 181, 0.2));

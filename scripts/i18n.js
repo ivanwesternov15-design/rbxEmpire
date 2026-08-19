@@ -99,6 +99,11 @@ const I18N = (function () {
     "ref.refresh": "Обновить",
     "ref.shared.text": "Залетай в rbxflare — забирай карточки и Robux 🚀",
     "ref.welcome": "Добро пожаловать по реферальной ссылке!",
+    "tg.botname": "rxgame_bot",
+    "tg.warn.outside": "Приложение работает только внутри Telegram. Открой его через бота.",
+    "tg.warn.nodata": "Telegram не передаёт данные пользователя. Проверь, что домен привязан к боту в BotFather (Menu Button → Domain), затем обнови.",
+    "tg.warn.open": "Открыть в Telegram",
+    "tg.warn.refresh": "Обновить",
 
     "dur.12h": "12 часов",
     "dur.24h": "24 часа",
@@ -334,6 +339,11 @@ const I18N = (function () {
     "ref.refresh": "Refresh",
     "ref.shared.text": "Join rbxflare — grab cards and Robux 🚀",
     "ref.welcome": "Welcome via referral link!",
+    "tg.botname": "rxgame_bot",
+    "tg.warn.outside": "This app only works inside Telegram. Open it via the bot.",
+    "tg.warn.nodata": "Telegram is not sending user data. Make sure the domain is bound to the bot in BotFather (Menu Button → Domain), then refresh.",
+    "tg.warn.open": "Open in Telegram",
+    "tg.warn.refresh": "Refresh",
 
     "dur.12h": "12 hours",
     "dur.24h": "24 hours",

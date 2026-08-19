@@ -24,6 +24,49 @@ if (typeof window === "undefined") {
     badge.textContent = n > 9 ? "9+" : String(n);
   }
 
+  /* ---------------- предупреждение о данных Telegram ---------------- */
+  function showTelegramWarn(mode) {
+    const box = document.getElementById("tg-warn");
+    if (!box) return;
+    const icon = document.getElementById("tg-warn-icon");
+    const text = document.getElementById("tg-warn-text");
+    const btn = document.getElementById("tg-warn-btn");
+    box.hidden = false;
+    if (mode === "outside") {
+      icon.innerHTML = Icons.get("send");
+      text.textContent = I18N.t("tg.warn.outside");
+      btn.textContent = I18N.t("tg.warn.open");
+      btn.onclick = () => TG.openTelegramLink("https://t.me/" + I18N.t("tg.botname") + "/rbxflare");
+    } else {
+      icon.innerHTML = Icons.get("settings");
+      text.textContent = I18N.t("tg.warn.nodata");
+      btn.textContent = I18N.t("tg.warn.refresh");
+      btn.onclick = () => window.location.reload();
+    }
+  }
+
+  function checkTelegramData() {
+    if (!TG.isTelegram()) {
+      showTelegramWarn("outside");
+      return;
+    }
+    // данные пришли не сразу — дозагружаем
+    let tries = 0;
+    const tryLoad = () => {
+      if (TG.hasUserData()) return;
+      if (TG.retryUser()) {
+        renderTopbar();
+        if (Nav.currentSection() === "profile") Views.render("profile");
+        return;
+      }
+      tries += 1;
+      if (tries < 5) setTimeout(tryLoad, 400);
+      else showTelegramWarn("nodata");
+    };
+    if (TG.hasUserData()) return;
+    tryLoad();
+  }
+
   function openHistoryModal() {
     UI.haptic("light");
     State.markHistorySeen();
@@ -85,6 +128,7 @@ if (typeof window === "undefined") {
     Nav.renderNav();
     Nav.switchTo("home", { force: true });
     requestAnimationFrame(() => setTimeout(hideSplash, 180));
+    checkTelegramData();
   } catch (err) {
     console.error("[rbxflare] boot error:", err);
     hideSplash();

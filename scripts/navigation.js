@@ -49,13 +49,13 @@ const Nav = (function () {
     const indicator = document.getElementById("nav-indicator");
     const active = nav.querySelector('.nav-item[data-section="' + current + '"]');
     if (!active) return;
-    const padX = 8;
+    const padX = 4;
     const left = active.offsetLeft;
     const width = active.offsetWidth;
     const center = left + width / 2;
     indicator.style.left = (center - (width - padX * 2) / 2) + "px";
     indicator.style.width = (width - padX * 2) + "px";
-    indicator.style.height = "calc(100% - 12px)";
+    indicator.style.height = "calc(100% - 10px)";
     const acc = ACCENTS[current] || ACCENTS.home;
     indicator.style.setProperty("--nav-color", acc[0]);
     indicator.style.setProperty("--nav-color-2", acc[1]);

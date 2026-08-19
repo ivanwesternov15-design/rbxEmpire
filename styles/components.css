@@ -200,6 +200,15 @@
 }
 .tip.show { opacity: 1; transform: translateX(-50%) scale(1); }
 
+/* тултипы инвентаря (Стейкинг/Активные): от левого края кнопки, чтобы не уезжал за экран */
+.inv-ind .tip {
+  left: 0;
+  transform: none;
+  transform-origin: left bottom;
+  text-align: left;
+}
+.inv-ind .tip.show { transform: none; }
+
 /* ---------- toggle ---------- */
 .toggle {
   position: relative;

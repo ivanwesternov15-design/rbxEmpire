@@ -9,6 +9,32 @@ const TG = (function () {
   let user = null;
   let isRealTelegram = false;
 
+  /* парсинг initData вручную (резерв, если initDataUnsafe не заполнен клиентом) */
+  function parseInitData(raw) {
+    if (!raw) return null;
+    try {
+      const q = new URLSearchParams(raw);
+      const u = q.get("user");
+      if (!u) return null;
+      return JSON.parse(decodeURIComponent(u));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function buildUser(u) {
+    return {
+      id: u.id,
+      firstName: u.first_name || "",
+      lastName: u.last_name || "",
+      username: u.username || "",
+      photoUrl: u.photo_url || "",
+      lang: (u.language_code || "ru").slice(0, 2),
+      premium: !!u.is_premium,
+      startParam: "",
+    };
+  }
+
   function init() {
     isRealTelegram = !!webApp;
     if (webApp) {
@@ -21,19 +47,11 @@ const TG = (function () {
     }
 
     const raw = webApp ? webApp.initDataUnsafe : null;
-    const u = (raw && raw.user) || null;
+    const u = (raw && raw.user) || parseInitData(webApp ? webApp.initData : "");
     const startParam = (raw && raw.start_param) || "";
 
-    if (u) {
-      user = {
-        id: u.id,
-        firstName: u.first_name || "",
-        lastName: u.last_name || "",
-        username: u.username || "",
-        photoUrl: u.photo_url || "",
-        lang: (u.language_code || "ru").slice(0, 2),
-        premium: !!u.is_premium,
-      };
+    if (u && u.id) {
+      user = buildUser(u);
     } else {
       // Демо-пользователь вне Telegram: нейтральный, без привязки к конкретному аккаунту
       user = {
@@ -44,6 +62,7 @@ const TG = (function () {
         photoUrl: "",
         lang: "ru",
         premium: false,
+        startParam: "",
       };
     }
 
@@ -55,6 +74,22 @@ const TG = (function () {
     }
     user.startParam = param;
     return user;
+  }
+
+  /* некоторые клиенты Telegram заполняют данные чуть позже — пробуем дозагрузить */
+  function retryUser() {
+    if (!webApp || !isRealTelegram || !user || (user.id && user.id !== 0)) return;
+    const raw = webApp.initDataUnsafe || null;
+    const u = (raw && raw.user) || parseInitData(webApp.initData || "");
+    if (u && u.id) {
+      user = buildUser(u);
+      return true;
+    }
+    return false;
+  }
+
+  function hasUserData() {
+    return isRealTelegram && !!user && !!user.id;
   }
 
   function haptic(type) {
@@ -135,6 +170,8 @@ const TG = (function () {
   return {
     init,
     getUser: () => user,
+    retryUser,
+    hasUserData,
     haptic,
     copyText,
     shareLink,
