@@ -57,7 +57,10 @@ python set_menu.py        # один раз: кнопка Mini App у бота
 
 ## Деплой (BotHost)
 1. Подключить репозиторий `ivanwesternov15-design/rbxEmpire`, ветка `main`.
-2. **Start command: `python main.py`** (рабочая директория `backend/`).
+2. **Start command: `scripts/app.js`** (без рабочей директории — не нужна).
+   BotHost запускает start command через node, поэтому указываем именно JS-файл:
+   он сам обнаружит Python, при необходимости доустановит `requirements.txt`
+   и запустит бэкенд (`backend/main.py`).
 3. Переменные окружения BotHost уже содержат `BOT_TOKEN`, `PORT`, `DATA_DIR=/app/data`,
    `DOMAIN` — код читает их автоматически: `PORT` (порт Flask), `DATA_DIR` (хранилище
    рефералов, переживает перезапуски), `DOMAIN` (домен для кнопки Mini App).
@@ -65,7 +68,7 @@ python set_menu.py        # один раз: кнопка Mini App у бота
 5. `main.py` при старте сам вешает кнопку меню на бота и отвечает на `/start`
    приветствием с кнопкой «Открыть rbxflare».
 
-> 💡 Если хостинг запускает проект как Node-приложение (`node scripts/app.js`) — это
-> теперь безопасно: файл обнаруживает Node и сам поднимает Python-бэкенд
-> (`python3 backend/main.py`). Также добавлены `Procfile` и корневой `main.py`
-> для автодетекта другими платформами.
+> 💡 BotHost исполняет start command через `node <команда>`, поэтому start command
+> всегда должна быть путём к JS-файлу: `scripts/app.js`. Он сам поднимает
+> Python-бэкенд и доустанавливает зависимости. `Procfile` и корневой `main.py`
+> добавлены для автодетекта другими платформами.
