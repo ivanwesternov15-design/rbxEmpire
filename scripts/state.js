@@ -513,6 +513,8 @@ const State = (function () {
   }
 
   /* ---------------- доступ ---------------- */
+  const ADMIN_IDS = []; // id администраторов (красная галочка), владелец — жёлтая
+
   return {
     load,
     on,
@@ -520,6 +522,7 @@ const State = (function () {
     save,
     get: () => data,
     isOwner: () => TG.getUser().id === TG.OWNER_ID,
+    isAdmin: () => ADMIN_IDS.includes(TG.getUser().id),
     canPickDaily,
     timeToNextDaily,
     pickDaily,

@@ -86,10 +86,13 @@ if (typeof window === "undefined") {
     inner.classList.toggle("compact", !isHome);
     const name = ((user.firstName || "") + " " + (user.lastName || "")).trim() || "User";
     document.getElementById("topbar-avatar").innerHTML = UI.avatarHtml(user, isHome ? 46 : 38);
-    document.getElementById("topbar-name").textContent = name;
-    const uname = user.username ? "@" + user.username : "";
-    document.getElementById("topbar-username").textContent = uname;
-    document.getElementById("topbar-id").textContent = "ID: " + user.id;
+    // NickName + галочка верификации: владелец — жёлтая, админ — красная
+    let verified = "";
+    if (State.isOwner()) verified = `<span class="topbar-verified owner" title="Owner">${Icons.get("verified")}</span>`;
+    else if (State.isAdmin()) verified = `<span class="topbar-verified admin" title="Admin">${Icons.get("verified")}</span>`;
+    document.getElementById("topbar-name").innerHTML = name + verified;
+    // внизу: ID: ... затем @username
+    document.getElementById("topbar-id").textContent = "ID: " + user.id + (user.username ? " @" + user.username : "");
     const iconEl = document.getElementById("hist-btn-icon");
     if (iconEl && !iconEl.dataset.ready) {
       iconEl.dataset.ready = "1";

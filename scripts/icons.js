@@ -24,6 +24,7 @@ const Icons = (function () {
     support: `<svg ${S}><path d="M4 13a8 8 0 0 1 16 0"/><rect x="2.5" y="13" width="4" height="6" rx="2"/><rect x="17.5" y="13" width="4" height="6" rx="2"/><path d="M19 19a3 3 0 0 1-3 3h-3"/></svg>`,
     about: `<svg ${S}><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><path d="M12 7.2v.1"/></svg>`,
     shield: `<svg ${S}><path d="M12 2.5 4.5 5.5v6c0 4.5 3.2 7.8 7.5 9.5 4.3-1.7 7.5-5 7.5-9.5v-6L12 2.5z"/><path d="m9 11.5 2.2 2.2L15.5 9"/></svg>`,
+    verified: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 14.2 4.8l3.3-.4.9 3.2 2.9 1.7-1.1 3.2 1.1 3.2-2.9 1.7-.9 3.2-3.3-.4L12 21.5l-2.2-2.3-3.3.4-.9-3.2-2.9-1.7 1.1-3.2-1.1-3.2 2.9-1.7.9-3.2 3.3.4z" fill="currentColor" stroke="none"/><path d="m8.4 12.1 2.4 2.4 4.8-4.9" stroke="#0B1620" stroke-width="2.6"/></svg>`,
     globe: `<svg ${S}><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19"/><path d="M12 2.5c2.8 2.7 4.2 6 4.2 9.5s-1.4 6.8-4.2 9.5c-2.8-2.7-4.2-6-4.2-9.5s1.4-6.8 4.2-9.5z"/></svg>`,
     robux: `<svg ${S}><path d="M12 2l7.5 4.5v9L12 20l-7.5-4.5v-9L12 2z"/><path d="M12 2v9l7.5 4.5"/><path d="M12 11 4.5 6.5"/></svg>`,
     coin: `<svg ${S}><circle cx="12" cy="12" r="9.5"/><path d="M12 6.5v11"/><path d="M15 9c-.7-1-1.8-1.5-3-1.5-1.6 0-3 .9-3 2.4 0 3.1 6 1.4 6 4.5 0 1.5-1.4 2.4-3 2.4-1.2 0-2.3-.5-3-1.5"/></svg>`,
