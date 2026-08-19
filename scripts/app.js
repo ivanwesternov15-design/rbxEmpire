@@ -51,23 +51,38 @@ if (typeof window === "undefined") {
   }
 
   function checkTelegramData() {
-    // не показываем баннер сразу: WebApp/initData могут подъехать с задержкой
-    const webAppOk = TG.isTelegram();
+    // плашка показывается только если данные не пришли долго, и скрывается сразу при появлении
     let tries = 0;
-    const iv = setInterval(() => {
+    let shown = false;
+    const tryResolve = () => {
       if (TG.hasUserData() || TG.retryUser()) {
-        clearInterval(iv);
         hideTelegramWarn();
         renderTopbar();
         if (Nav.currentSection() === "profile") Views.render("profile");
+        return true;
+      }
+      return false;
+    };
+    const iv = setInterval(() => {
+      if (tryResolve()) {
+        clearInterval(iv);
         return;
       }
       tries += 1;
-      if (tries >= 12) {
-        clearInterval(iv);
+      const webAppOk = TG.isTelegram();
+      if (tries >= 12 && !shown) {
+        shown = true;
         showTelegramWarn(webAppOk ? "nodata" : "outside");
+      } else if (shown && webAppOk) {
+        // плашка «вне Telegram» показана, а WebApp появился позже — убираем её
+        hideTelegramWarn();
       }
+      if (tries > 90) clearInterval(iv); // максимум ~54 сек фоновых проверок
     }, 600);
+    // при возврате в окно мини-аппа — мгновенно перепроверяем и прячем плашку
+    window.addEventListener("focus", () => {
+      if (tryResolve()) clearInterval(iv);
+    });
   }
 
   function openHistoryModal() {
