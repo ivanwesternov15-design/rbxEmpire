@@ -116,7 +116,6 @@
   }
 
   function supportHtml() {
-    const owner = TG.OWNER_ID;
     return `
       <div class="panel glass-panel" style="padding:14px">
         <div class="text-soft" style="font-size:13px;margin-bottom:12px">${I18N.t("profile.support.sub")}</div>
@@ -125,8 +124,8 @@
           <span><span class="row-title" style="display:block">${I18N.t("profile.support.bot")}</span><span class="row-sub">@rxgame_bot</span></span>
         </button>
         <button class="list-row" id="support-owner" style="width:100%;text-align:left">
-          <span class="row-icon">${Icons.get("profile")}</span>
-          <span><span class="row-title" style="display:block">${I18N.t("profile.support.owner")}</span><span class="row-sub">tg://user?id=${owner}</span></span>
+          <span class="row-icon">${Icons.get("support")}</span>
+          <span><span class="row-title" style="display:block">${I18N.t("profile.support.owner")}</span><span class="row-sub">@darkgeniy</span></span>
         </button>
       </div>`;
   }
@@ -166,7 +165,7 @@
         </div>
       </div>
       <div class="about-footer">
-        <span class="badge">${I18N.t("profile.about.version")}: v1.1.0</span>
+        <span class="badge">${I18N.t("profile.about.version")}: v1.1.1</span>
       </div>`;
   }
 
@@ -213,7 +212,7 @@
     const botBtn = sub.querySelector("#support-bot");
     if (botBtn) botBtn.addEventListener("click", () => TG.openTelegramLink("https://t.me/rxgame_bot"));
     const ownerBtn = sub.querySelector("#support-owner");
-    if (ownerBtn) ownerBtn.addEventListener("click", () => TG.openTelegramLink("tg://user?id=" + TG.OWNER_ID));
+    if (ownerBtn) ownerBtn.addEventListener("click", () => TG.openTelegramLink("https://t.me/darkgeniy"));
   }
 
   Views.profile = function () {

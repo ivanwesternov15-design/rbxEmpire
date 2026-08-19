@@ -13,7 +13,7 @@
     const r = task.reward;
     if (r.type === "coins") return "+" + UI.fmt(r.amount) + " " + I18N.t("stats.coins");
     if (r.type === "robux") return "+" + UI.fmt(r.amount) + " " + I18N.t("stats.robux");
-    if (r.type === "card") return I18N.t("r." + (r.rarity || "gold"));
+    if (r.type === "card") return I18N.t("r." + (r.rarity || "gold")) + " " + I18N.t("tasks.reward.card");
     return "";
   }
 
@@ -22,28 +22,29 @@
     const desc = task.descKey ? I18N.t(task.descKey) : task.desc || "";
     const pct = Math.min(100, Math.round((task.progress / task.target) * 100));
     const justDone = task.done && lastDoneIds && !lastDoneIds.includes(task.id) ? "just-done" : "";
-    const progressHtml =
-      task.done || task.target <= 1
-        ? ""
-        : `<div class="task-body">
-             <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
-             <div class="task-progress-num">${UI.fmt(task.progress)} / ${UI.fmt(task.target)}</div>
-           </div>`;
+    const rewardIcon = task.reward.type === "coins" ? "coin" : task.reward.type === "robux" ? "robux" : "cards";
+    const showProgress = !task.done && task.target > 1;
     return `
-      <div class="task-card ${task.done ? "done" : ""} ${justDone}" data-id="${task.id}">
+      <div class="task-card ${task.done ? "done" : ""} ${justDone}" data-id="${task.id}" style="animation-delay:${Math.min(idx * 45, 300)}ms">
         <div class="task-head">
           <span class="task-icon ${task.done ? "done-icon" : ""}">${Icons.get(task.done ? "check" : taskIcon(task.type))}</span>
           <span style="flex:1;min-width:0">
             <span class="task-title" style="display:block">${title}</span>
             ${desc ? `<span class="task-desc" style="display:block">${desc}</span>` : ""}
           </span>
+          <span class="task-reward-chip ${task.done ? "earned" : ""}">
+            ${Icons.get(rewardIcon)}${rewardText(task)}
+          </span>
         </div>
         <div class="task-body">
-          <div class="task-reward ${task.done ? "earned" : ""}">
-            ${task.done ? `<span class="tick">${Icons.get("check")}</span>` : Icons.get(task.reward.type === "coins" ? "coin" : task.reward.type === "robux" ? "robux" : "cards")}
-            ${rewardText(task)} ${task.done ? "· " + I18N.t("tasks.reward.earned") : ""}
+          <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+          <div class="task-progress-num">
+            ${task.done
+              ? `<span class="tick">${Icons.get("check")}</span> ${I18N.t("tasks.reward.earned")}`
+              : showProgress
+              ? `${UI.fmt(task.progress)} / ${UI.fmt(task.target)} · ${pct}%`
+              : I18N.t("tasks.status.waiting")}
           </div>
-          ${progressHtml}
         </div>
       </div>`;
   }
@@ -58,6 +59,9 @@
     }
     const active = tasks.filter((t) => !t.done);
     const done = tasks.filter((t) => t.done);
+    const doneCount = done.length;
+    const totalCount = tasks.length;
+    const donePct = Math.round((doneCount / totalCount) * 100);
 
     const groupHtml = (list, labelKey, icon) =>
       list.length
@@ -65,9 +69,19 @@
         : "";
 
     sec.innerHTML = `
-      <div class="panel glass-panel" style="padding:6px 16px">
+      <div class="panel glass-panel">
         <div class="panel-header">
           <h2 class="panel-title">${Icons.get("tasks")}${I18N.t("tasks.title")}</h2>
+          <span class="task-done-count ${doneCount === totalCount ? "all" : ""}">${doneCount}/${totalCount}</span>
+        </div>
+        <div class="progress-track" style="margin-bottom:10px"><div class="progress-fill" style="width:${donePct}%"></div></div>
+        <div class="task-summary">
+          ${Icons.get("sparkles")}
+          <span>${I18N.t("tasks.summary").replace("{done}", doneCount).replace("{total}", totalCount)}</span>
+        </div>
+        <div class="task-tip">
+          ${Icons.get("info")}
+          <span>${I18N.t("tasks.tip")}</span>
         </div>
       </div>
       ${groupHtml(active, "tasks.active", "bolt")}

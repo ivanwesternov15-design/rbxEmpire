@@ -92,7 +92,7 @@
           <button class="stake-option" data-key="${key}">
             <span class="stake-icon" style="width:40px;height:40px;border-radius:12px;background:rgba(22,38,52,.75);border:1px solid var(--glass-border-strong);display:flex;align-items:center;justify-content:center;flex-shrink:0">${Icons.get("clock")}</span>
             <span class="stake-info">
-              <span class="stake-duration" style="display:block">${dur.labelKey}</span>
+              <span class="stake-duration" style="display:block">${I18N.t(dur.labelKey)}</span>
               <span class="stake-bonus">${bonus}</span>
             </span>
           </button>`;
@@ -127,7 +127,7 @@
 
     const body = `
       <div style="text-align:center;margin-bottom:14px">
-        <div style="font-weight:800;font-size:16px">${cap(card.rarity)} ${I18N.t("r." + card.rarity)}</div>
+        <div style="font-weight:800;font-size:16px">${I18N.t("r." + card.rarity)}</div>
         <div class="text-dim" style="font-size:12.5px;margin-top:2px">${I18N.t("cards.stake.duration")} ${cfgTxt}</div>
       </div>
       <div class="ring-wrap">
@@ -290,16 +290,24 @@
           <div class="empty-sub">${I18N.t("cards.empty.sub")}</div>
         </div>`;
     } else {
-      grid = `<div class="cards-grid">${s.inventory.map(cardItemHtml).join("")}</div>`;
+      const totalValue = s.inventory.reduce((sum, c) => sum + (c.value || 0), 0);
+      const stakingCount = s.inventory.filter((c) => c.status === "staking").length;
+      grid = `
+        <div class="inv-info">
+          <span class="inv-chip">${Icons.get("cards")}<b>${s.inventory.length}</b> ${I18N.t("cards.inv.total")}</span>
+          <span class="inv-chip">${Icons.get("robux")}<b>${UI.fmt(totalValue)}</b> ${I18N.t("cards.inv.value")}</span>
+          <span class="inv-chip ${stakingCount ? "on" : ""}">${Icons.get("clock")}<b>${stakingCount}</b> ${I18N.t("cards.inv.staking")}</span>
+        </div>
+        <div class="cards-grid">${s.inventory.map(cardItemHtml).join("")}</div>`;
     }
 
     sec.innerHTML = `
       <div class="panel glass-panel">
-        <div class="panel-header">
+        <div class="panel-header" style="align-items:flex-start;margin-bottom:6px">
           <h2 class="panel-title">${Icons.get("cards")}${I18N.t("cards.title")}</h2>
-          <button class="icon-btn" id="shop-btn" title="${I18N.t("cards.shop")}">${Icons.get("shop")}</button>
+          <button class="icon-btn" id="shop-btn" style="margin-top:-8px" title="${I18N.t("cards.shop")}">${Icons.get("shop")}</button>
         </div>
-        <div style="display:flex;justify-content:flex-end;margin:-6px 0 12px">${indicatorHtml()}</div>
+        <div style="display:flex;justify-content:flex-start;margin:0 0 12px">${indicatorHtml()}</div>
       </div>
       ${grid}`;
 
