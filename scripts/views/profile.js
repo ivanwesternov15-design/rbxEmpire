@@ -120,7 +120,7 @@
       .join("");
     return `
       <div class="about-hero">
-        <div class="about-logo">rbx<span>flare</span></div>
+        <div class="about-logo">Rbx<span>Game</span></div>
       </div>
       <div class="panel glass-panel">
         <h2 class="panel-title" style="margin-bottom:14px">${Icons.get("about")}${I18N.t("profile.tabs.about")}</h2>

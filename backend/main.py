@@ -17,7 +17,7 @@ APP_URL = rbx.env("APP_URL").strip() or ("https://" + rbx.env("DOMAIN").strip().
 APP_URL = APP_URL.rstrip("/") + "/"
 
 WELCOME_TEXT = (
-    "Добро пожаловать в rbxflare! 🎴\n"
+    "Добро пожаловать в Rbx Game! 🎴\n"
     "Открывай ежедневные карточки, собирай коллекцию, "
     "стейкай и выполняй задания — получай Robux."
 )
@@ -30,7 +30,7 @@ def set_menu_button():
         payload={
             "menu_button": {
                 "type": "web_app",
-                "text": "🎴 rbxflare",
+                "text": "🎴 Rbx Game",
                 "web_app": {"url": APP_URL},
             }
         },
@@ -58,7 +58,7 @@ def handle_update(upd):
             "text": reply,
             "reply_markup": {
                 "inline_keyboard": [
-                    [{"text": "🎴 Открыть rbxflare", "web_app": {"url": APP_URL}}]
+                    [{"text": "🎴 Открыть Rbx Game", "web_app": {"url": APP_URL}}]
                 ]
             },
         },

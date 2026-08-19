@@ -1,8 +1,8 @@
 {
-  "name": "rbxflare-miniapp",
+  "name": "rbx-game-miniapp",
   "version": "1.1.2",
   "private": true,
-  "description": "Telegram Mini App rbxflare — фронтенд + Python бэкенд",
+  "description": "Telegram Mini App Rbx Game — фронтенд + Python бэкенд",
   "scripts": {
     "start": "cd backend && python main.py"
   }

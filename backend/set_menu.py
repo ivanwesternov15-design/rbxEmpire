@@ -13,7 +13,7 @@ res = rbx.tg_api(
     payload={
         "menu_button": {
             "type": "web_app",
-            "text": "🎴 rbxflare",
+            "text": "🎴 Rbx Game",
             "web_app": {"url": APP_URL},
         }
     },

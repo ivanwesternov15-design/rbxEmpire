@@ -36,7 +36,7 @@ if (typeof window === "undefined") {
       icon.innerHTML = Icons.get("send");
       text.textContent = I18N.t("tg.warn.outside");
       btn.textContent = I18N.t("tg.warn.open");
-      btn.onclick = () => TG.openTelegramLink("https://t.me/" + I18N.t("tg.botname") + "/rbxflare");
+      btn.onclick = () => TG.openTelegramLink("https://t.me/" + I18N.t("tg.botname"));
     } else {
       icon.innerHTML = Icons.get("settings");
       text.textContent = I18N.t("tg.warn.nodata");
@@ -45,26 +45,29 @@ if (typeof window === "undefined") {
     }
   }
 
+  function hideTelegramWarn() {
+    const box = document.getElementById("tg-warn");
+    if (box) box.hidden = true;
+  }
+
   function checkTelegramData() {
-    if (!TG.isTelegram()) {
-      showTelegramWarn("outside");
-      return;
-    }
-    // данные пришли не сразу — дозагружаем
+    // не показываем баннер сразу: WebApp/initData могут подъехать с задержкой
+    const webAppOk = TG.isTelegram();
     let tries = 0;
-    const tryLoad = () => {
-      if (TG.hasUserData()) return;
-      if (TG.retryUser()) {
+    const iv = setInterval(() => {
+      if (TG.hasUserData() || TG.retryUser()) {
+        clearInterval(iv);
+        hideTelegramWarn();
         renderTopbar();
         if (Nav.currentSection() === "profile") Views.render("profile");
         return;
       }
       tries += 1;
-      if (tries < 5) setTimeout(tryLoad, 400);
-      else showTelegramWarn("nodata");
-    };
-    if (TG.hasUserData()) return;
-    tryLoad();
+      if (tries >= 12) {
+        clearInterval(iv);
+        showTelegramWarn(webAppOk ? "nodata" : "outside");
+      }
+    }, 600);
   }
 
   function openHistoryModal() {
