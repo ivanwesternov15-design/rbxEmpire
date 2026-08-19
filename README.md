@@ -57,9 +57,12 @@ python set_menu.py        # один раз: кнопка Mini App у бота
 
 ## Деплой (BotHost)
 1. Подключить репозиторий `ivanwesternov15-design/rbxEmpire`, ветка `main`.
-2. **Start command: `python main.py`** (рабочая директория `backend/`), PORT из переменных окружения.
-3. В `@BotFather` указать Domain и Menu Button → `https://ваш-домен/`.
-4. `main.py` при старте сам вешает кнопку меню на бота и отвечает на `/start`
+2. **Start command: `python main.py`** (рабочая директория `backend/`).
+3. Переменные окружения BotHost уже содержат `BOT_TOKEN`, `PORT`, `DATA_DIR=/app/data`,
+   `DOMAIN` — код читает их автоматически: `PORT` (порт Flask), `DATA_DIR` (хранилище
+   рефералов, переживает перезапуски), `DOMAIN` (домен для кнопки Mini App).
+4. В `@BotFather` указать Domain → `https://ваш-домен/` (тот, что в переменной `DOMAIN`).
+5. `main.py` при старте сам вешает кнопку меню на бота и отвечает на `/start`
    приветствием с кнопкой «Открыть rbxflare».
 
 > ⚠️ Не запускайте фронтенд через Node (`node scripts/app.js`) — это браузерные скрипты.

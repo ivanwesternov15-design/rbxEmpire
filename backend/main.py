@@ -17,7 +17,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
-APP_URL = os.getenv("APP_URL", "").strip().rstrip("/") + "/"
+APP_URL = (
+    os.getenv("APP_URL", "").strip()
+    or ("https://" + os.getenv("DOMAIN", "").strip().rstrip("/"))
+    or ""
+)
+APP_URL = APP_URL.rstrip("/") + "/"
 API_URL = "https://api.telegram.org/bot" + BOT_TOKEN
 
 WELCOME_TEXT = (

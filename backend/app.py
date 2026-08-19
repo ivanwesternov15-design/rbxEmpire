@@ -25,7 +25,7 @@ import requests
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONT_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
-DATA_DIR = os.path.join(BASE_DIR, "data")
+DATA_DIR = os.getenv("DATA_DIR", os.path.join(BASE_DIR, "data"))
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
