@@ -105,8 +105,19 @@ const TG = (function () {
   }
 
   function openTelegramLink(url) {
-    if (webApp && webApp.openTelegramLink) {
-      try { webApp.openTelegramLink(url); return; } catch (e) {}
+    if (webApp) {
+      try {
+        // мобильные клиенты: открытие ссылки внутри Telegram сворачивает апп в фон (не закрывает)
+        const platform = (webApp.platform || "").toLowerCase();
+        const mobile = platform === "android" || platform === "ios";
+        if (mobile) {
+          webApp.openTelegramLink(url);
+          return;
+        }
+        // десктоп / web: внешний браузер — мини-апп остаётся открытым
+        webApp.openLink(url, { try_instant_view: false });
+        return;
+      } catch (e) {}
     }
     window.open(url, "_blank");
   }

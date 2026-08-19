@@ -1,6 +1,6 @@
 {
   "name": "rbxflare-miniapp",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "private": true,
   "description": "Telegram Mini App rbxflare — фронтенд + Python бэкенд",
   "scripts": {

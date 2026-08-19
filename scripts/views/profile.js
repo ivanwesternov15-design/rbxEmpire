@@ -29,8 +29,10 @@
         ${UI.avatarHtml(user, 88)}
         ${owner ? `<span class="badge badge-gold" style="margin-top:4px">${Icons.get("shield")}${I18N.t("profile.owner")}</span>` : ""}
         <div class="profile-username">${name}</div>
-        ${handle ? `<div class="profile-handle">${handle}</div>` : ""}
-        <div class="profile-id">ID: ${user.id}</div>
+        <div class="profile-meta">
+          ${handle ? `<span class="profile-handle">${handle}</span>` : ""}
+          <span class="profile-id">ID: ${user.id}</span>
+        </div>
         ${bioHtml}
         <div class="profile-first">${Icons.get("history")}${I18N.t("profile.first")}: ${UI.fmtFullDate(new Date(s.firstLogin || Date.now()).getTime())}</div>
       </div>
@@ -165,7 +167,7 @@
         </div>
       </div>
       <div class="about-footer">
-        <span class="badge">${I18N.t("profile.about.version")}: v1.1.1</span>
+        <span class="badge">${I18N.t("profile.about.version")}: v1.1.2</span>
       </div>`;
   }
 
