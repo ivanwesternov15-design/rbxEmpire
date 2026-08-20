@@ -18,6 +18,9 @@ body {
 
 #app { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 
+/* блокируем прокрутку фона, пока открыта модалка */
+html.no-scroll, html.no-scroll body { overflow: hidden; touch-action: none; }
+
 button {
   font-family: inherit;
   border: none;

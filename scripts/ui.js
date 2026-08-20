@@ -88,13 +88,27 @@ const UI = (function () {
     const close = (animate = true) => {
       if (!animate) {
         overlay.remove();
+        document.documentElement.classList.remove("no-scroll");
         return;
       }
       overlay.classList.add("closing");
       overlay.querySelector(".modal").classList.add("closing");
-      setTimeout(() => overlay.remove(), 240);
+      setTimeout(() => {
+        overlay.remove();
+        if (!root.querySelector(".modal-overlay")) document.documentElement.classList.remove("no-scroll");
+      }, 240);
       if (onClose) onClose();
     };
+    // блокируем свайп подложки: если модалка сама не скроллится — глушим жест
+    overlay.addEventListener(
+      "touchmove",
+      (e) => {
+        const sheet = overlay.querySelector(".modal");
+        if (!sheet || sheet.scrollHeight <= sheet.clientHeight + 2) e.preventDefault();
+      },
+      { passive: false }
+    );
+    document.documentElement.classList.add("no-scroll");
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) close();
     });
@@ -129,6 +143,7 @@ const UI = (function () {
   function closeAllModals() {
     const root = document.getElementById("modal-root");
     root.innerHTML = "";
+    document.documentElement.classList.remove("no-scroll");
   }
 
   /* ---------------- тост ---------------- */

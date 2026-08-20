@@ -112,17 +112,12 @@
       )
       .join("");
     return `
-      <div class="about-hero">
-        <div class="about-logo">Rbx<span>Game</span></div>
-      </div>
-      <div class="panel glass-panel">
-        <h2 class="panel-title" style="margin-bottom:14px">${Icons.get("about")}${I18N.t("profile.tabs.about")}</h2>
+      <div class="panel glass-panel" style="padding:14px">
         <div class="about-list">${list}</div>
       </div>
       <div class="about-desc">
         <span class="about-desc-icon">${Icons.get("sparkles")}</span>
         <div>
-          <p>${I18N.t("about.desc")}</p>
           <p class="about-save">${Icons.get("check")}${I18N.t("about.save")}</p>
         </div>
       </div>
