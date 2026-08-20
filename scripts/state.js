@@ -52,6 +52,9 @@ const State = (function () {
         coins: data.balances.coins,
         robux: data.balances.robux,
         streak: data.balances.streak,
+      }).then((res) => {
+        if (res && res.status === 401) console.warn("[rbxflare] ping rejected 401: server BOT_TOKEN mismatch or missing initData");
+        return res;
       }).catch(() => null);
     } catch (e) {
       return Promise.resolve(null);

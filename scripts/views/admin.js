@@ -129,6 +129,10 @@ window.Views = Views;
 
     const syncNote = Array.isArray(serverPlayers)
       ? `<div class="sync-note ok">${Icons.get("refresh")}${I18N.t("admin.users.synced")}: ${serverPlayers.length}</div>`
+      : serverStatus === 401
+      ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.auth")}${TG.getInitData() ? "" : " · initData: нет"}</div>`
+      : serverStatus === 403
+      ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.forbidden")}</div>`
       : serverStatus === false
       ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.offline")}</div>`
       : "";
@@ -741,14 +745,19 @@ window.Views = Views;
   function loadServerPlayers() {
     return API.players()
       .then((res) => {
-        const ok = res && Array.isArray(res.players);
-        if (ok) {
+        if (res && Array.isArray(res.players)) {
           serverPlayers = res.players;
           if (window.UsersStore) UsersStore.mergeServer(res.players);
-        }
-        if (serverStatus !== (ok ? true : false)) {
-          serverStatus = ok ? true : false;
-          if (screen === "users") render();
+          if (serverStatus !== true) {
+            serverStatus = true;
+            if (screen === "users") render();
+          }
+        } else {
+          const st = res && res.status ? res.status : false;
+          if (serverStatus !== st) {
+            serverStatus = st;
+            if (screen === "users") render();
+          }
         }
         return res;
       })
