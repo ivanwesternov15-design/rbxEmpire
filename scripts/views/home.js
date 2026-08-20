@@ -14,28 +14,50 @@ window.Views = Views;
     }
   }
 
-  /* ---------- статистика ---------- */
-  function statsHtml() {
-    const s = State.get();
-    return `
-      <div class="stats-grid">
-        <div class="stat-card" id="stat-robux">
-          <div class="stat-icon idle-shimmer"><img src="assets/icons/robux.png" alt="Robux"></div>
-          <div class="stat-value" id="stat-val-robux">0</div>
-          <div class="stat-label">${I18N.t("stats.robux")}</div>
-        </div>
-        <div class="stat-card" id="stat-coins">
-          <div class="stat-icon idle-shimmer"><img src="assets/icons/coins.png" alt="Coins"></div>
-          <div class="stat-value" id="stat-val-coins">0</div>
-          <div class="stat-label">${I18N.t("stats.coins")}</div>
-        </div>
-        <div class="stat-card" id="stat-streak">
-          <div class="stat-icon"><img class="idle-flame" src="assets/icons/streak.png" alt="Streak"></div>
-          <div class="stat-value" id="stat-val-streak">0</div>
-          <div class="stat-label">${I18N.t("stats.streak")}</div>
-        </div>
-      </div>`;
+  /* ---------- стрик-окно (раз в 24 часа) ---------- */
+  function short(n) {
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+    return String(n);
   }
+
+  function streakTrackHtml(cfg, day) {
+    let cells = "";
+    for (let i = 0; i < 10; i++) {
+      const n = i + 1;
+      const st = n < day ? "done" : n === day ? "now" : "future";
+      cells += `
+        <div class="st-cell ${st}">
+          <span class="st-dot">${n}</span>
+          <span class="st-reward">${short(cfg[i])}</span>
+        </div>`;
+    }
+    return `<div class="streak-track">${cells}</div>`;
+  }
+
+  Views.streakPopup = function () {
+    const s = State.get();
+    const day = Math.min(Math.max(s.balances.streak, 1), 10);
+    const cfg = State.streakCfg();
+    const body = `
+      <div class="streak-popup">
+        <div class="sp-icon">${Icons.get("flame")}</div>
+        <div class="sp-title">${I18N.t("streak.title").replace("{n}", day)}</div>
+        <div class="sp-sub">${I18N.t("streak.sub")}</div>
+        ${streakTrackHtml(cfg, day)}
+        <div class="sp-today">${I18N.t("streak.today").replace("{amt}", UI.fmt(cfg[day - 1]))}</div>
+        <button class="btn btn-gold" id="streak-claim" style="width:100%">${Icons.get("coin")}${I18N.t("streak.claim")}</button>
+        <button class="btn btn-ghost" id="streak-later" style="width:100%">${I18N.t("common.cancel")}</button>
+      </div>`;
+    const m = UI.modal({ title: "", icon: "", body, center: true });
+    m.bodyEl.querySelector("#streak-claim").addEventListener("click", () => {
+      const r = State.claimStreak();
+      UI.haptic("success");
+      UI.toast("+" + UI.fmt(r.amount) + " " + I18N.t("stats.coins"), "coin");
+      m.close();
+    });
+    m.bodyEl.querySelector("#streak-later").addEventListener("click", () => m.close());
+  };
 
   /* ---------- ежедневные карточки ---------- */
   function dailyCardBack(i) {
@@ -217,31 +239,7 @@ window.Views = Views;
   Views.home = function () {
     stopTimers();
     const sec = document.getElementById("sec-home");
-    const prevVals = Views.__stats || null;
-    sec.innerHTML = statsHtml() + dailyHtml() + quickHtml();
-    const s = State.get();
-
-    // счётчики
-    const anim = (id, val, prev) => {
-      const node = document.getElementById("stat-val-" + id);
-      if (!node) return;
-      UI.countUp(node, prev !== null ? prev : 0, val, 700, "");
-    };
-    anim("robux", s.balances.robux, prevVals ? prevVals.robux : null);
-    anim("coins", s.balances.coins, prevVals ? prevVals.coins : null);
-    anim("streak", s.balances.streak, prevVals ? prevVals.streak : null);
-    Views.__stats = { robux: s.balances.robux, coins: s.balances.coins, streak: s.balances.streak };
-
-    // flash при изменении
-    if (prevVals) {
-      ["robux", "coins", "streak"].forEach((k) => {
-        const card = document.getElementById("stat-" + k);
-        if (card && prevVals[k] !== s.balances[k]) {
-          card.classList.add("flash-pulse");
-          setTimeout(() => card.classList.remove("flash-pulse"), 650);
-        }
-      });
-    }
+    sec.innerHTML = dailyHtml() + quickHtml();
 
     // ежедневные карточки
     if (State.canPickDaily()) {

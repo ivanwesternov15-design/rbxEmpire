@@ -21,7 +21,6 @@ if (typeof window === "undefined") {
     if (!badge) return;
     const n = State.unreadHistoryCount();
     badge.hidden = n <= 0;
-    badge.textContent = n > 9 ? "9+" : String(n);
   }
 
   /* ---------------- предупреждение о данных Telegram (без баннера: только тихий ретрай) ---------------- */
@@ -64,18 +63,27 @@ if (typeof window === "undefined") {
     const isHome = Nav.currentSection() === "home";
     inner.classList.toggle("compact", !isHome);
     const name = ((user.firstName || "") + " " + (user.lastName || "")).trim() || "User";
-    document.getElementById("topbar-avatar").innerHTML = UI.avatarHtml(user, isHome ? 46 : 38);
+    document.getElementById("topbar-avatar").innerHTML =
+      `<span class="avatar-ring">${UI.avatarHtml(user, isHome ? 46 : 38)}</span>`;
     // NickName + галочка верификации: владелец — жёлтая, админ — красная
     let verified = "";
     if (State.isOwner()) verified = `<span class="topbar-verified owner" title="Owner">${Icons.get("verified")}</span>`;
     else if (State.isAdmin()) verified = `<span class="topbar-verified admin" title="Admin">${Icons.get("verified")}</span>`;
     document.getElementById("topbar-name").innerHTML = name + verified;
-    // внизу: ID: ... затем @username
-    document.getElementById("topbar-id").textContent = "ID: " + user.id + (user.username ? " @" + user.username : "");
+    // под именем только @username (без ID)
+    const unameEl = document.getElementById("topbar-username");
+    unameEl.textContent = user.username ? "@" + user.username : "";
+    unameEl.hidden = !user.username;
+    // справа: балансы Robux и Coins
+    const s = State.get();
+    const bals = document.getElementById("topbar-bals");
+    bals.innerHTML = `
+      <span class="topbar-bal bal-robux"><img src="assets/icons/robux.png" alt="Robux"><b>${UI.fmt(s.balances.robux)}</b></span>
+      <span class="topbar-bal bal-coins"><img src="assets/icons/coins.png" alt="Coins"><b>${UI.fmt(s.balances.coins)}</b></span>`;
     const iconEl = document.getElementById("hist-btn-icon");
     if (iconEl && !iconEl.dataset.ready) {
       iconEl.dataset.ready = "1";
-      iconEl.innerHTML = Icons.get("history");
+      iconEl.innerHTML = Icons.get("bell");
     }
     renderHistoryBadge();
   }
@@ -137,6 +145,13 @@ if (typeof window === "undefined") {
       if (!res || !res.ok) console.warn("[rbxflare] initData validation failed");
     });
   }
+
+  // стрик-окно: раз в 24 часа при входе в мини-апп
+  setTimeout(() => {
+    if (State.shouldShowStreakPopup() && typeof Views.streakPopup === "function") {
+      Views.streakPopup();
+    }
+  }, 1200);
 
   const histBtn = document.getElementById("topbar-history");
   if (histBtn) histBtn.addEventListener("click", openHistoryModal);

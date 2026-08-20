@@ -642,6 +642,8 @@ window.Views = Views;
         return shopSection();
       case "staking":
         return stakingSection();
+      case "streak":
+        return streakSection();
       case "system":
         return systemSection();
       default:
@@ -662,11 +664,51 @@ window.Views = Views;
       case "staking":
         bindStaking(root);
         break;
+      case "streak":
+        bindStreak(root);
+        break;
       case "system":
         bindSystem(root);
         break;
       default:
         bindUsers(root);
+    }
+  }
+  /* ================= СТРИК ================= */
+  function streakSection() {
+    const cfg = State.streakCfg();
+    const rows = cfg
+      .map(
+        (v, i) => `
+        <div class="admin-inline">
+          <span class="ai-label" style="min-width:64px">${Icons.get("flame")}${I18N.t("admin.streak.day")} ${i + 1}</span>
+          <input type="number" step="1" min="0" value="${v}" data-streak-day="${i + 1}">
+          <span class="ai-unit">Coins</span>
+        </div>`
+      )
+      .join("");
+    return `
+      <div class="admin-section">
+        <h4>${Icons.get("flame")}${I18N.t("admin.streak.title")}</h4>
+        <div class="admin-card">${rows}</div>
+        <button class="btn btn-primary" id="streak-save" style="width:100%;margin-top:8px">${Icons.get("check")}${I18N.t("admin.save")}</button>
+      </div>`;
+  }
+
+  function bindStreak(root) {
+    const save = root.querySelector("#streak-save");
+    if (save) {
+      save.addEventListener("click", () => {
+        const arr = [];
+        for (let i = 1; i <= 10; i++) {
+          const inp = root.querySelector(`[data-streak-day="${i}"]`);
+          arr.push(parseInt((inp || {}).value, 10) || 0);
+        }
+        State.setStreakCfg(arr);
+        UI.haptic("success");
+        UI.toast(I18N.t("admin.streak.saved"), "check");
+        render();
+      });
     }
   }
 
@@ -681,9 +723,10 @@ window.Views = Views;
     { id: "cards", icon: "cards", color: "gold" },
     { id: "shop", icon: "shop", color: "amber" },
     { id: "staking", icon: "clock", color: "blue" },
+    { id: "streak", icon: "flame", color: "orange" },
     { id: "system", icon: "settings", color: "slate" },
   ];
-  const CAT_COLORS = { violet: "#8b5cf6", green: "#4ade80", gold: "#ffd76a", amber: "#ffb800", blue: "#38bdf8", slate: "#94a3b8" };
+  const CAT_COLORS = { violet: "#8b5cf6", green: "#4ade80", gold: "#ffd76a", amber: "#ffb800", blue: "#38bdf8", slate: "#94a3b8", orange: "#fb923c" };
   let screen = "home";
   let serverPlayers = null;
 

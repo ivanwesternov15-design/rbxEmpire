@@ -1,5 +1,51 @@
 ﻿/* ================= section: Главное ================= */
 
+/* ---------- стрик-окно (раз в 24 часа) ---------- */
+.streak-popup { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 6px 0 2px; }
+.sp-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, rgba(251, 146, 60, 0.25), rgba(14, 26, 38, 0.9));
+  border: 1px solid rgba(251, 146, 60, 0.45);
+  box-shadow: 0 0 30px rgba(251, 146, 60, 0.25);
+  animation: flameBob 1.6s var(--ease-out) infinite;
+}
+.sp-icon svg { width: 32px; height: 32px; color: #fb923c; }
+.sp-title { font-size: 20px; font-weight: 800; color: var(--text-main); text-align: center; }
+.sp-sub { font-size: 13px; color: var(--text-dim); text-align: center; margin-top: -8px; }
+.streak-track { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; width: 100%; padding: 4px 0; }
+.st-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.st-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  background: rgba(143, 163, 181, 0.1);
+  border: 1px solid var(--glass-border);
+  color: var(--text-dim);
+}
+.st-reward { font-size: 9px; font-weight: 700; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.st-cell.done .st-dot { background: rgba(251, 146, 60, 0.16); border-color: rgba(251, 146, 60, 0.5); color: #fdba74; }
+.st-cell.done .st-reward { color: rgba(251, 146, 60, 0.85); }
+.st-cell.now .st-dot {
+  background: linear-gradient(135deg, #fb923c, #f97316);
+  border-color: #fb923c;
+  color: #fff;
+  box-shadow: 0 0 14px rgba(251, 146, 60, 0.6);
+  animation: flameBob 1.4s var(--ease-out) infinite;
+}
+.st-cell.now .st-reward { color: var(--accent-gold); }
+.st-cell.future .st-dot { opacity: 0.55; }
+.sp-today { font-size: 13.5px; font-weight: 800; color: var(--accent-gold); }
+
 .content {
   flex: 1;
   overflow-y: auto;

@@ -16,12 +16,45 @@
 .topbar-inner.compact .avatar { width: 38px; height: 38px; font-size: 15px; }
 .topbar-info { flex: 1; min-width: 0; }
 .topbar-name { font-weight: 800; font-size: clamp(15px, 3.2vw, 18px); color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; }
-.topbar-id { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.topbar-id { font-size: 12px; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* галочка верификации: владелец — жёлтая, админ — красная */
 .topbar-verified { width: 17px; height: 17px; flex-shrink: 0; transform: translateY(-2px); filter: drop-shadow(0 0 6px currentColor); }
 .topbar-verified.owner { color: var(--accent-gold); }
 .topbar-verified.admin { color: var(--accent-red); }
+
+/* анимированная обводка аватарки (вращающаяся дуга) */
+.avatar-ring {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  border-radius: 50%;
+  padding: 3px;
+  background: conic-gradient(from 0deg, transparent 10deg, #a78bfa 60deg, transparent 130deg, transparent 200deg, #ffd76a 250deg, transparent 330deg);
+  animation: ringSpin 2.6s linear infinite;
+}
+@keyframes ringSpin { to { transform: rotate(360deg); } }
+.avatar-ring .avatar { position: relative; z-index: 1; border: 0; }
+
+/* балансы в топбаре */
+.topbar-bals { display: flex; align-items: center; gap: 6px; }
+.topbar-bal {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgba(26, 42, 58, 0.5);
+  border: 1px solid var(--glass-border);
+  white-space: nowrap;
+}
+.topbar-bal img { width: 20px; height: 20px; }
+.topbar-bal b { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.topbar-bal.bal-robux b { color: #7dd3fc; }
+.topbar-bal.bal-coins b { color: var(--accent-gold); }
+.topbar-inner.compact .topbar-bal { padding: 4px 8px; }
+.topbar-inner.compact .topbar-bal img { width: 17px; height: 17px; }
+.topbar-inner.compact .topbar-bal b { font-size: 12.5px; }
 
 /* кнопка истории в топбаре + бейдж непрочитанных */
 .hist-btn {
@@ -43,20 +76,14 @@
 .hist-btn:active { transform: scale(0.92); color: var(--text-main); border-color: var(--glass-border-strong); }
 .hist-badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #F87171, #dc2626);
-  color: #fff;
-  font-size: 10.5px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 10px rgba(248, 113, 113, 0.55);
+  top: -4px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff4d5e;
+  border: 2px solid #0b1620;
+  box-shadow: 0 0 10px rgba(255, 77, 94, 0.7);
 }
 
 /* ---------- bottom nav ---------- */

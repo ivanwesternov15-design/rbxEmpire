@@ -106,9 +106,11 @@ const State = (function () {
         },
         chances: { basic: 40, silver: 30, gold: 17, diamond: 9, mythic: 4 },
         values: { basic: [40, 80], silver: [120, 200], gold: [300, 500], diamond: [800, 1200], mythic: [2000, 3500] },
+        streakCfg: [100, 200, 300, 500, 750, 1000, 1500, 2000, 3000, 5000],
       },
       admins: [],
       users: [],
+      streakPopup: null,
     };
   }
 
@@ -126,6 +128,7 @@ const State = (function () {
     data.admin.staking = Object.assign({}, d.admin.staking, (data.admin && data.admin.staking) || {});
     data.admin.chances = Object.assign({}, d.admin.chances, (data.admin && data.admin.chances) || {});
     data.admin.values = Object.assign({}, d.admin.values, (data.admin && data.admin.values) || {});
+    data.admin.streakCfg = Array.isArray(data.admin && data.admin.streakCfg) ? data.admin.streakCfg : d.admin.streakCfg;
     data.balances = Object.assign({}, d.balances, data.balances || {});
     data.daily = Object.assign({}, d.daily, data.daily || {});
     data.tasks = Array.isArray(data.tasks) && data.tasks.length ? data.tasks : d.tasks;
@@ -160,6 +163,33 @@ const State = (function () {
     data.balances.streak = data.balances.lastVisit === yesterday ? data.balances.streak + 1 : 1;
     data.balances.lastVisit = today;
     save();
+  }
+
+  const DEFAULT_STREAK_CFG = [100, 200, 300, 500, 750, 1000, 1500, 2000, 3000, 5000];
+  function streakCfg() {
+    const arr = (data.admin && data.admin.streakCfg) || [];
+    const out = [];
+    for (let i = 0; i < 10; i++) out.push(typeof arr[i] === "number" && arr[i] >= 0 ? arr[i] : DEFAULT_STREAK_CFG[i]);
+    return out;
+  }
+  function setStreakCfg(arr) {
+    data.admin.streakCfg = (arr || []).slice(0, 10).map((v) => Math.max(0, Math.floor(Number(v) || 0)));
+    while (data.admin.streakCfg.length < 10) data.admin.streakCfg.push(DEFAULT_STREAK_CFG[data.admin.streakCfg.length]);
+    save();
+    emit();
+  }
+  function shouldShowStreakPopup() {
+    return data.balances.streak >= 1 && data.streakPopup !== todayKey();
+  }
+  function claimStreak() {
+    const day = Math.min(Math.max(data.balances.streak, 1), 10);
+    const amount = streakCfg()[day - 1] || 0;
+    data.balances.coins += amount;
+    data.streakPopup = todayKey();
+    if (amount > 0) log("streak", "flame", "streak.history", amount, "coins");
+    save();
+    emit();
+    return { day, amount };
   }
 
   /* ---------------- награды / история ---------------- */
@@ -692,6 +722,10 @@ const State = (function () {
     setLang,
     setHaptics,
     updateStreak,
+    streakCfg,
+    setStreakCfg,
+    shouldShowStreakPopup,
+    claimStreak,
     reset,
     RARITIES,
     DURATIONS,
