@@ -56,6 +56,7 @@ if (typeof window === "undefined") {
     let shown = false;
     const tryResolve = () => {
       if (TG.hasUserData() || TG.retryUser()) {
+        State.upsertUser(TG.getUser());
         hideTelegramWarn();
         renderTopbar();
         if (Nav.currentSection() === "profile") Views.render("profile");

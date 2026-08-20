@@ -167,9 +167,9 @@ window.Views = Views;
             <div class="face face-back">
               <span class="card-q" style="font-size:44px;color:rgba(204,208,207,.5)">?</span>
             </div>
-            <div class="face face-front rarity-bg" id="flip-front" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
-              <img id="flip-img" style="width:78%;height:auto;border-radius:8px" src="" alt="">
-              <span id="flip-rarity" style="font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#fff;text-shadow:0 0 10px rgba(0,0,0,.7)"></span>
+            <div class="face face-front rarity-bg" id="flip-front" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
+              <img id="flip-img" style="width:78%;height:auto;border-radius:8px;margin-top:10px" src="" alt="">
+              <span id="flip-rarity" style="font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#fff;text-shadow:0 0 10px rgba(0,0,0,.7);margin-top:-8px"></span>
             </div>
           </div>
         </div>

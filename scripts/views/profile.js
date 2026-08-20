@@ -78,13 +78,6 @@
             <div class="set-sub mono">${TG.getUser().id}</div>
           </div>
         </div>
-        <div class="setting-row">
-          <div>
-            <div class="set-title" style="color:var(--accent-red)">${I18N.t("profile.settings.reset")}</div>
-            <div class="set-sub">${I18N.t("profile.settings.reset.sub")}</div>
-          </div>
-          <button class="btn btn-danger" id="reset-btn">${Icons.get("trash")}</button>
-        </div>
       </div>`;
   }
 
@@ -151,27 +144,6 @@
       hapticBtn.addEventListener("click", () => {
         UI.haptic("light");
         State.setHaptics(!State.get().haptics);
-      });
-    }
-    const resetBtn = root.querySelector("#reset-btn");
-    if (resetBtn) {
-      resetBtn.addEventListener("click", () => {
-        UI.haptic("warning");
-        const m = UI.modal({
-          title: I18N.t("profile.settings.reset"),
-          icon: "trash",
-          body: `<p class="text-soft" style="margin-bottom:14px">${I18N.t("profile.settings.reset.confirm")}</p>
-            <div class="row">
-              <button class="btn btn-ghost grow" id="reset-no">${I18N.t("common.cancel")}</button>
-              <button class="btn btn-danger grow" id="reset-yes">${I18N.t("profile.settings.reset")}</button>
-            </div>`,
-        });
-        m.bodyEl.querySelector("#reset-no").addEventListener("click", () => m.close());
-        m.bodyEl.querySelector("#reset-yes").addEventListener("click", () => {
-          m.close();
-          State.reset();
-          UI.toast(I18N.t("profile.settings.reset.done"), "check");
-        });
       });
     }
   }

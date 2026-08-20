@@ -93,6 +93,8 @@ const State = (function () {
         chances: { basic: 40, silver: 30, gold: 17, diamond: 9, mythic: 4 },
         values: { basic: [40, 80], silver: [120, 200], gold: [300, 500], diamond: [800, 1200], mythic: [2000, 3500] },
       },
+      admins: [],
+      users: [],
     };
   }
 
@@ -119,6 +121,8 @@ const State = (function () {
     data.totalCollected = data.totalCollected || 0;
     data.stakingCompleted = data.stakingCompleted || 0;
     data.lastSeenHistoryTs = data.lastSeenHistoryTs || 0;
+    data.admins = Array.isArray(data.admins) ? data.admins : [];
+    data.users = Array.isArray(data.users) ? data.users : [];
     save();
   }
 
@@ -442,6 +446,13 @@ const State = (function () {
     save();
     emit();
   }
+  function updateTask(id, patch) {
+    const t = data.tasks.find((x) => x.id === id);
+    if (!t) return;
+    Object.assign(t, patch);
+    save();
+    emit();
+  }
   function setTaskProgress(id, p) {
     const t = data.tasks.find((x) => x.id === id);
     if (!t) return;
@@ -502,6 +513,82 @@ const State = (function () {
     emit();
   }
 
+  /* ---------------- админка: пользователи, роли, балансы ---------------- */
+  function upsertUser(u) {
+    if (!u || !u.id) return;
+    const users = data.users || (data.users = []);
+    const name = ((u.firstName || "") + " " + (u.lastName || "")).trim() || "User";
+    const role = u.id === TG.OWNER_ID ? "owner" : (data.admins || []).includes(u.id) ? "admin" : "user";
+    const rec = users.find((x) => x.id === u.id);
+    if (rec) {
+      rec.name = name;
+      rec.username = u.username || "";
+      rec.role = role;
+      rec.lastLogin = Date.now();
+    } else {
+      users.push({ id: u.id, name, username: u.username || "", role, coins: 0, robux: 0, lastLogin: Date.now() });
+    }
+  }
+  function setAdminRole(id, on) {
+    if (!id || id === TG.OWNER_ID) return; // владельцу админку не трогаем
+    data.admins = data.admins || [];
+    const has = data.admins.includes(id);
+    if (on && !has) data.admins.push(id);
+    if (!on && has) data.admins = data.admins.filter((x) => x !== id);
+    const rec = (data.users || []).find((x) => x.id === id);
+    if (rec) rec.role = on ? "admin" : "user";
+    save();
+    emit();
+  }
+  function modifyBalance(type, delta) {
+    if (type !== "coins" && type !== "robux") return;
+    data.balances[type] = Math.max(0, (data.balances[type] || 0) + delta);
+    save();
+    emit();
+  }
+  function grantRandomCard() {
+    const roll = rollRarity();
+    const value = rollValue(roll.rarity);
+    const card = addCard(roll.rarity, value, "daily");
+    log("grant", "card", "history.card", 1, "cards");
+    save();
+    emit();
+    return card;
+  }
+  function resetDaily() {
+    data.daily = { lastPick: null, lastReward: null };
+    save();
+    emit();
+  }
+  function resetUserProgress(id) {
+    if (id === TG.getUser().id) {
+      reset();
+      return;
+    }
+    const rec = (data.users || []).find((x) => x.id === id);
+    if (rec) {
+      rec.coins = 0;
+      rec.robux = 0;
+    }
+    save();
+    emit();
+  }
+  function setUserBalance(id, type, delta) {
+    const rec = (data.users || []).find((x) => x.id === id);
+    if (!rec) return;
+    if (type === "coins") rec.coins = Math.max(0, (rec.coins || 0) + delta);
+    else if (type === "robux") rec.robux = Math.max(0, (rec.robux || 0) + delta);
+    save();
+    emit();
+  }
+  function removeUser(id) {
+    if (id === TG.getUser().id || id === TG.OWNER_ID) return;
+    data.users = (data.users || []).filter((x) => x.id !== id);
+    setAdminRole(id, false);
+    save();
+    emit();
+  }
+
   function reset() {
     const fresh = defaults();
     fresh.firstLogin = todayKey();
@@ -513,7 +600,10 @@ const State = (function () {
   }
 
   /* ---------------- доступ ---------------- */
-  const ADMIN_IDS = []; // id администраторов (красная галочка), владелец — жёлтая
+  // админы хранятся в data.admins (выдаются из админки), владелец — всегда админ
+  function isAdmin() {
+    return TG.getUser().id === TG.OWNER_ID || (data.admins || []).includes(TG.getUser().id);
+  }
 
   return {
     load,
@@ -522,7 +612,8 @@ const State = (function () {
     save,
     get: () => data,
     isOwner: () => TG.getUser().id === TG.OWNER_ID,
-    isAdmin: () => ADMIN_IDS.includes(TG.getUser().id),
+    isAdmin,
+    isAdminId: (id) => id === TG.OWNER_ID || (data.admins || []).includes(id),
     canPickDaily,
     timeToNextDaily,
     pickDaily,
@@ -546,6 +637,7 @@ const State = (function () {
     checkTasks,
     addTask,
     removeTask,
+    updateTask,
     setTaskProgress,
     forceTask,
     setAdmin,
@@ -553,6 +645,16 @@ const State = (function () {
     removeShopOffer,
     addTestCoins,
     addTestRobux,
+    upsertUser,
+    setAdminRole,
+    modifyBalance,
+    grantRandomCard,
+    resetDaily,
+    resetUserProgress,
+    setUserBalance,
+    removeUser,
+    users: () => data.users || [],
+    admins: () => data.admins || [],
     setLang,
     setHaptics,
     updateStreak,
