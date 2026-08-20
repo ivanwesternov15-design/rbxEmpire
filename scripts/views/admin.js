@@ -39,6 +39,26 @@ window.Views = Views;
       <button class="au-set-btn" data-bal-save data-bal-type="${type}" ${idAttr}>${Icons.get("check")}</button>`;
   }
 
+  /* диагностика initData для ноты об ошибке авторизации */
+  function initDataDiag() {
+    const raw = TG.getInitData ? TG.getInitData() : "";
+    if (!raw) return "initData: нет";
+    try {
+      const parts = {};
+      raw.split("&").forEach((p) => {
+        const i = p.indexOf("=");
+        if (i > 0) parts[p.slice(0, i)] = decodeURIComponent(p.slice(i + 1));
+      });
+      const ageMin = Math.round(Date.now() / 1000 - Number(parts.auth_date || 0)) / 60;
+      let uid = "?";
+      try { uid = JSON.parse(parts.user || "{}").id || "?"; } catch (e) {}
+      const ageTxt = ageMin < 1440 ? Math.round(ageMin) + " мин назад" : (ageMin / 1440).toFixed(1) + " дн назад (протух)";
+      return "initData: ok · auth " + ageTxt + " · user " + uid;
+    } catch (e) {
+      return "initData: ok";
+    }
+  }
+
   /* ================= ПОЛЬЗОВАТЕЛИ ================= */
   function roleBadgeBig(id) {
     if (id === TG.OWNER_ID) return `<span class="au-role role-owner">${Icons.get("shield")}${I18N.t("admin.users.role.owner")}</span>`;
@@ -130,7 +150,7 @@ window.Views = Views;
     const syncNote = Array.isArray(serverPlayers)
       ? `<div class="sync-note ok">${Icons.get("refresh")}${I18N.t("admin.users.synced")}: ${serverPlayers.length}</div>`
       : serverStatus === 401
-      ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.auth")}${TG.getInitData() ? "" : " · initData: нет"}</div>`
+      ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.auth")} · ${initDataDiag()}</div>`
       : serverStatus === 403
       ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.forbidden")}</div>`
       : serverStatus === false
@@ -742,6 +762,7 @@ window.Views = Views;
     }
   }
 
+  let retried401 = false;
   function loadServerPlayers() {
     return API.players()
       .then((res) => {
@@ -757,6 +778,13 @@ window.Views = Views;
           if (serverStatus !== st) {
             serverStatus = st;
             if (screen === "users") render();
+          }
+          if (res && res.status === 401 && !retried401) {
+            retried401 = true;
+            setTimeout(() => {
+              retried401 = false;
+              if (screen === "users") loadServerPlayers();
+            }, 5000);
           }
         }
         return res;
