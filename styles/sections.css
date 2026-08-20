@@ -923,7 +923,10 @@
   background: rgba(74, 222, 128, 0.09);
   border: 1px solid rgba(74, 222, 128, 0.25);
 }
-.sync-note svg { width: 14px; height: 14px; }
+.sync-note svg { width: 14px; height: 14px; animation: spin 3.2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.sync-note:not(.ok) { color: #ffd9d9; background: rgba(248, 113, 113, 0.09); border-color: rgba(248, 113, 113, 0.25); }
+.sync-note:not(.ok) svg { animation: none; }
 .badge-red { color: #ffd9d9; background: rgba(248, 113, 113, 0.18); border-color: rgba(248, 113, 113, 0.4); }
 .badge-gold svg, .badge-red svg, .badge svg { width: 12px; height: 12px; }
 

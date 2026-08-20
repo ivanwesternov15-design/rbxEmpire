@@ -128,7 +128,9 @@ window.Views = Views;
       : `<div class="empty-state" style="padding:24px 0">${Icons.get("users")}<div class="empty-sub">${I18N.t("admin.users.empty")}</div></div>`;
 
     const syncNote = Array.isArray(serverPlayers)
-      ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.synced")}</div>`
+      ? `<div class="sync-note ok">${Icons.get("refresh")}${I18N.t("admin.users.synced")}: ${serverPlayers.length}</div>`
+      : serverStatus === false
+      ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.offline")}</div>`
       : "";
 
     return `
@@ -148,15 +150,9 @@ window.Views = Views;
   }
 
   function bindUsers(root) {
-    API.players()
-      .then((res) => {
-        if (res && Array.isArray(res.players)) {
-          serverPlayers = res.players;
-          if (window.UsersStore) UsersStore.mergeServer(res.players);
-          render();
-        }
-      })
-      .catch(() => {});
+    clearPoll();
+    loadServerPlayers();
+    pollTimer = setInterval(loadServerPlayers, 8000);
     root.querySelectorAll("[data-bal-save]").forEach((b) => {
       b.addEventListener("click", () => {
         const type = b.getAttribute("data-bal-type");
@@ -732,6 +728,38 @@ window.Views = Views;
   const CAT_COLORS = { violet: "#005AFD", green: "#649AD3", gold: "#2F88E6", amber: "#0068DD", blue: "#2F88E6", slate: "#649AD3", orange: "#106BC4" };
   let screen = "home";
   let serverPlayers = null;
+  let serverStatus = null;
+  let pollTimer = null;
+
+  function clearPoll() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }
+
+  function loadServerPlayers() {
+    return API.players()
+      .then((res) => {
+        const ok = res && Array.isArray(res.players);
+        if (ok) {
+          serverPlayers = res.players;
+          if (window.UsersStore) UsersStore.mergeServer(res.players);
+        }
+        if (serverStatus !== (ok ? true : false)) {
+          serverStatus = ok ? true : false;
+          if (screen === "users") render();
+        }
+        return res;
+      })
+      .catch(() => {
+        if (serverStatus !== false) {
+          serverStatus = false;
+          if (screen === "users") render();
+        }
+        return null;
+      });
+  }
 
   function catCount(id) {
     const s = State.get();
@@ -800,6 +828,7 @@ window.Views = Views;
   }
 
   function render() {
+    if (screen !== "users") clearPoll();
     const isPage = !!document.getElementById("admin-root");
     const sub = isPage ? document.getElementById("admin-root") : document.getElementById("profile-sub");
     if (!sub) return;

@@ -57,6 +57,15 @@ def handle_update(upd):
     reply = WELCOME_TEXT
     web_url = APP_URL
     if text.startswith("/start"):
+        # игрок сразу попадает в список (players.json) — ещё до открытия WebApp
+        chat = rbx.tg_api("getChat", params={"chat_id": chat_id})
+        pl_name = ""
+        pl_username = ""
+        if chat and chat.get("ok"):
+            r = chat.get("result", {})
+            pl_name = ((r.get("first_name") or "") + " " + (r.get("last_name") or "")).strip()
+            pl_username = r.get("username") or ""
+        rbx.save_player_seen(chat_id, pl_name, pl_username)
         payload = text.split(" ", 1)[1] if " " in text else ""
         m = REF_RE.match(payload) if payload else None
         if m:

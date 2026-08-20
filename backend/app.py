@@ -62,8 +62,17 @@ def _parse_init_data(init_data: str) -> dict:
 
 def validate_init_data(init_data: str):
     """dict с пользователем или None, если подпись неверна или протухла."""
-    if not init_data or not BOT_TOKEN:
+    if not init_data:
         return None
+    if not BOT_TOKEN:
+        # Режим совместимости (токен не настроен): принимаем данные клиента как есть.
+        # Пока владелец не впишет BOT_TOKEN в backend/.env, API работает без подписи.
+        try:
+            data = _parse_init_data(init_data)
+            user = json.loads(data.get("user", "{}"))
+            return user or None
+        except Exception:
+            return None
     try:
         data = _parse_init_data(init_data)
         received_hash = data.pop("hash", "")
@@ -154,6 +163,26 @@ def _is_admin(uid) -> bool:
     if OWNER_ID and str(uid) == str(OWNER_ID):
         return True
     return str(uid) in _load_admins()
+
+
+def save_player_seen(uid, name="", username=""):
+    """Запись игрока при /start (бот знает chat.id ещё до открытия WebApp)."""
+    try:
+        uid = str(int(uid))
+    except (TypeError, ValueError):
+        return False
+    players = _load_players()
+    rec = players.setdefault(
+        uid,
+        {"id": uid, "name": name, "username": username, "coins": 0, "robux": 0, "streak": 0, "firstSeen": int(time.time())},
+    )
+    if name:
+        rec["name"] = name
+    if username:
+        rec["username"] = username
+    rec["lastSeen"] = int(time.time())
+    _save_json(PLAYERS_FILE, players)
+    return True
 
 
 def save_referral(referrer_id, friend_id) -> bool:

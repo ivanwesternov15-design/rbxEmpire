@@ -124,6 +124,8 @@ if (typeof window === "undefined") {
     Nav.switchTo("home", { force: true });
     requestAnimationFrame(() => setTimeout(hideSplash, 180));
     checkTelegramData();
+    // немедленная регистрация на сервере (не дожидаясь 10-сек таймера)
+    if (TG.hasUserData() && TG.getInitData()) State.pingNow();
   } catch (err) {
     console.error("[rbxflare] boot error:", err);
     hideSplash();
