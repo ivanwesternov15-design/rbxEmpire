@@ -82,8 +82,8 @@ window.Views = Views;
         </div>
       </div>`;
 
-    const users = State.users();
-    const merged = users.slice();
+    const storeUsers = window.UsersStore ? UsersStore.all() : [];
+    const merged = storeUsers.slice();
     if (Array.isArray(serverPlayers)) {
       serverPlayers.forEach((p) => {
         if (!merged.some((x) => x.id === parseInt(p.id, 10))) {
@@ -92,7 +92,7 @@ window.Views = Views;
       });
     }
     const list = merged.length
-      ? users
+      ? merged
           .map((u) => {
             const isOwnerU = u.id === TG.OWNER_ID;
             const isAdmin = State.isAdminId(u.id);
@@ -152,6 +152,7 @@ window.Views = Views;
       .then((res) => {
         if (res && Array.isArray(res.players)) {
           serverPlayers = res.players;
+          if (window.UsersStore) UsersStore.mergeServer(res.players);
           render();
         }
       })
@@ -732,7 +733,7 @@ window.Views = Views;
 
   function catCount(id) {
     const s = State.get();
-    if (id === "users") return State.users().length;
+    if (id === "users") return window.UsersStore ? UsersStore.count() : State.users().length;
     if (id === "tasks") return s.tasks.length;
     if (id === "shop") return s.shop.length;
     return null;
@@ -743,7 +744,7 @@ window.Views = Views;
     return `
       <div class="admin-stats">
         ${statCard("cards", s.inventory.length, I18N.t("cards.title"))}
-        ${statCard("users", State.users().length, I18N.t("admin.users.list"))}
+        ${statCard("users", window.UsersStore ? UsersStore.count() : State.users().length, I18N.t("admin.users.list"))}
         ${statCard("coin", UI.fmt(s.balances.coins), I18N.t("stats.coins"))}
         ${statCard("robux", UI.fmt(s.balances.robux), I18N.t("stats.robux"))}
       </div>`;

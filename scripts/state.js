@@ -29,6 +29,7 @@ const State = (function () {
 
   function save() {
     Cache.set(KEY, data);
+    if (window.UsersStore) UsersStore.saveCurrent();
     schedulePing();
   }
 
@@ -39,10 +40,22 @@ const State = (function () {
     if (!window.TG || !TG.hasUserData() || !TG.getInitData()) return;
     pingTimer = setTimeout(() => {
       pingTimer = null;
-      try {
-        API.pingPlayer({ coins: data.balances.coins, robux: data.balances.robux }).catch(() => {});
-      } catch (e) {}
+      pingNow();
     }, 10000);
+  }
+
+  /* немедленный пинг текущего игрока (при входе в апп) */
+  function pingNow() {
+    if (!window.TG || !TG.hasUserData() || !TG.getInitData()) return Promise.resolve(null);
+    try {
+      return API.pingPlayer({
+        coins: data.balances.coins,
+        robux: data.balances.robux,
+        streak: data.balances.streak,
+      }).catch(() => null);
+    } catch (e) {
+      return Promise.resolve(null);
+    }
   }
 
   function uid() {
@@ -572,6 +585,7 @@ const State = (function () {
     } else {
       users.push({ id: u.id, name, username: u.username || "", role, coins: 0, robux: 0, lastLogin: Date.now() });
     }
+    if (window.UsersStore) UsersStore.saveUser(u);
     save();
     emit();
   }
@@ -641,6 +655,10 @@ const State = (function () {
       if (type === "coins") rec.coins = v;
       else rec.robux = v;
     }
+    if (window.UsersStore) {
+      if (id == null) UsersStore.saveCurrent();
+      else UsersStore.update(id, { coins: rec.coins, robux: rec.robux });
+    }
     save();
     emit();
   }
@@ -673,6 +691,7 @@ const State = (function () {
     on,
     emit,
     save,
+    pingNow,
     get: () => data,
     isOwner: () => TG.getUser().id === TG.OWNER_ID,
     isAdmin,

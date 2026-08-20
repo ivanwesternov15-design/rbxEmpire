@@ -261,7 +261,7 @@ def handle_api(method: str, path: str, body_bytes: bytes):
         players = _load_players()
         rec = players.setdefault(
             uid,
-            {"id": uid, "name": "", "username": "", "coins": 0, "robux": 0, "firstSeen": int(time.time())},
+            {"id": uid, "name": "", "username": "", "coins": 0, "robux": 0, "streak": 0, "firstSeen": int(time.time())},
         )
         rec["name"] = (
             ((user.get("first_name") or "") + " " + (user.get("last_name") or "")).strip()
@@ -270,6 +270,7 @@ def handle_api(method: str, path: str, body_bytes: bytes):
         rec["username"] = user.get("username") or rec.get("username", "")
         rec["coins"] = max(0, int(body.get("coins", rec.get("coins", 0)) or 0))
         rec["robux"] = max(0, int(body.get("robux", rec.get("robux", 0)) or 0))
+        rec["streak"] = max(0, int(body.get("streak", rec.get("streak", 0)) or 0))
         rec["lastSeen"] = int(time.time())
         _save_json(PLAYERS_FILE, players)
         return 200, {"ok": True}

@@ -29,6 +29,7 @@ if (typeof window === "undefined") {
     const iv = setInterval(() => {
       if (TG.hasUserData() || TG.retryUser()) {
         State.upsertUser(TG.getUser());
+        State.pingNow();
         renderTopbar();
         if (Nav.currentSection() === "profile") Views.render("profile");
         clearInterval(iv);
@@ -41,6 +42,7 @@ if (typeof window === "undefined") {
     window.addEventListener("focus", () => {
       if (TG.hasUserData() || TG.retryUser()) {
         State.upsertUser(TG.getUser());
+        State.pingNow();
         renderTopbar();
         if (Nav.currentSection() === "profile") Views.render("profile");
         clearInterval(iv);
