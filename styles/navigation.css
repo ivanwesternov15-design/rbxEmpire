@@ -49,7 +49,7 @@
   gap: 4px;
   padding: 4px 8px;
   border-radius: 10px;
-  background: rgba(26, 42, 58, 0.5);
+  background: rgba(6, 34, 74, 0.5);
   border: 1px solid var(--glass-border);
   white-space: nowrap;
 }
@@ -72,7 +72,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(26, 42, 58, 0.5);
+  background: rgba(6, 34, 74, 0.5);
   border: 1px solid var(--glass-border);
   color: var(--text-soft);
   transition: transform 160ms var(--ease-out), color 160ms var(--ease-out), border-color 160ms var(--ease-out);
@@ -92,22 +92,21 @@
 }
 
 /* ---------- bottom nav ---------- */
+/* ---------- bottom nav: летающая панель ---------- */
 .bottomnav {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + var(--safe-bottom));
   z-index: 90;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 8px 6px calc(8px + var(--safe-bottom));
-  background: rgba(15, 30, 43, 0.78);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border-top: 1px solid var(--glass-border);
-  border-radius: 26px 26px 0 0;
-  box-shadow: 0 -10px 40px rgba(4, 10, 16, 0.55);
+  padding: 8px 6px;
+  border-radius: 17px;
+  background: linear-gradient(165deg, rgba(12, 41, 73, 0.94), rgba(4, 26, 56, 0.94));
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 14px 44px rgba(1, 14, 33, 0.65), 0 2px 12px rgba(1, 14, 33, 0.5);
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
@@ -118,9 +117,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 3px;
   width: 72px;
-  padding: 6px 0 4px;
+  min-height: 48px;
+  padding: 5px 0;
   color: var(--text-soft);
   transition: color 240ms var(--ease-out);
   -webkit-user-select: none;
@@ -128,11 +129,22 @@
   -webkit-touch-callout: none;
 }
 .nav-item svg { width: 24px; height: 24px; transition: transform 320ms var(--ease-spring), filter 240ms var(--ease-out); }
-.nav-item .nav-label { font-size: 11px; font-weight: 600; letter-spacing: 0.2px; }
+.nav-item .nav-label {
+  height: 0;
+  opacity: 0;
+  transform: translateY(6px);
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  transition: height 300ms var(--ease-smooth), opacity 240ms var(--ease-out) 80ms, transform 300ms var(--ease-smooth) 40ms;
+}
 .nav-item.active { color: var(--text-main); }
+.nav-item.active .nav-label { height: 15px; opacity: 1; transform: translateY(0); }
 .nav-item.active svg {
-  transform: scale(1.14) translateY(-2px);
-  filter: drop-shadow(0 2px 8px var(--nav-glow, rgba(143, 163, 181, 0.6)));
+  transform: scale(1.16) translateY(-1px);
+  filter: drop-shadow(0 2px 10px var(--nav-glow, rgba(47, 136, 230, 0.7)));
 }
 
 /* «слайм»-индикатор: растягивается под ширину активной категории */
@@ -141,9 +153,9 @@
   top: 5px;
   height: calc(100% - 10px);
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--nav-color, rgba(74, 92, 106, 0.5)), var(--nav-color-2, rgba(37, 55, 69, 0.55)));
-  border: 1px solid rgba(143, 163, 181, 0.28);
-  box-shadow: 0 0 18px var(--nav-glow, rgba(143, 163, 181, 0.2));
+  background: linear-gradient(135deg, var(--nav-color, rgba(47, 136, 230, 0.45)), var(--nav-color-2, rgba(0, 90, 253, 0.5)));
+  border: 1px solid rgba(100, 154, 211, 0.35);
+  box-shadow: 0 0 18px var(--nav-glow, rgba(47, 136, 230, 0.25));
   transition: left 520ms var(--ease-slimy), width 520ms var(--ease-slimy), background 420ms var(--ease-out);
   pointer-events: none;
   z-index: 0;
@@ -167,7 +179,7 @@
 .cat-card:nth-child(4) { animation-delay: 120ms; }
 .cat-card:nth-child(5) { animation-delay: 160ms; }
 @keyframes catIn { from { opacity: 0; transform: translateY(18px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.cat-card:active { transform: scale(0.97); background: rgba(143, 163, 181, 0.25); }
+.cat-card:active { transform: scale(0.97); background: rgba(100, 154, 211, 0.25); }
 .cat-card .cat-icon {
   width: 48px;
   height: 48px;

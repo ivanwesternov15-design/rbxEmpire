@@ -7,11 +7,11 @@ const Nav = (function () {
   const LABEL_KEYS = ["nav.home", "nav.cards", "nav.referrals", "nav.tasks", "nav.profile"];
   const ICONS = ["home", "cards", "referrals", "tasks", "profile"];
   const ACCENTS = {
-    home: ["#38BDF8", "#0E7490"],
-    cards: ["#A78BFA", "#6D28D9"],
-    referrals: ["#FBBF24", "#B45309"],
-    tasks: ["#34D399", "#047857"],
-    profile: ["#F472B6", "#BE185D"],
+    home: ["#2F88E6", "#005AFD"],
+    cards: ["#649AD3", "#003391"],
+    referrals: ["#0068DD", "#001F58"],
+    tasks: ["#005AFD", "#003391"],
+    profile: ["#106BC4", "#001F58"],
   };
 
   let current = "home";

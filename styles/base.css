@@ -41,13 +41,11 @@ img { display: block; }
 .hidden { display: none !important; }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-thumb { background: rgba(143, 163, 181, 0.32); border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(100, 154, 211, 0.32); border-radius: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 
 .glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  background: linear-gradient(165deg, rgba(12, 41, 73, 0.88), rgba(4, 26, 56, 0.82));
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-panel);
@@ -83,7 +81,7 @@ h2.panel-title {
 .skeleton-block, .skeleton-line {
   position: relative;
   overflow: hidden;
-  background: rgba(143, 163, 181, 0.12);
+  background: rgba(100, 154, 211, 0.12);
   border-radius: 10px;
 }
 .skeleton-block::after, .skeleton-line::after {
@@ -252,13 +250,13 @@ h2.panel-title {
   font-size: clamp(34px, 9vw, 48px);
   font-weight: 900;
   letter-spacing: 4px;
-  background: linear-gradient(120deg, #8FA3B5, #ffffff 35%, #FFD76A 60%, #38BDF8 85%);
+  background: linear-gradient(120deg, #649AD3, #ffffff 35%, #2F88E6 60%, #7dd3fc 85%);
   background-size: 260% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   animation: aboutGrad 5s ease infinite;
-  filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.35));
+  filter: drop-shadow(0 0 20px rgba(47, 136, 230, 0.35));
 }
 .splash-logo span { color: transparent; }
 
@@ -266,7 +264,7 @@ h2.panel-title {
   width: 120px;
   height: 4px;
   border-radius: 4px;
-  background: rgba(143, 163, 181, 0.18);
+  background: rgba(100, 154, 211, 0.18);
   overflow: hidden;
 }
 .splash-bar i {
@@ -274,7 +272,7 @@ h2.panel-title {
   height: 100%;
   width: 40%;
   border-radius: 4px;
-  background: linear-gradient(90deg, #38BDF8, #A78BFA, #FBBF24);
+  background: linear-gradient(90deg, #005AFD, #2F88E6, #649AD3);
   animation: splashBar 1.1s var(--ease-smooth) infinite;
 }
 @keyframes splashBar { 0% { transform: translateX(-110%); } 100% { transform: translateX(310%); } }

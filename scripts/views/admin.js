@@ -726,7 +726,7 @@ window.Views = Views;
     { id: "streak", icon: "flame", color: "orange" },
     { id: "system", icon: "settings", color: "slate" },
   ];
-  const CAT_COLORS = { violet: "#8b5cf6", green: "#4ade80", gold: "#ffd76a", amber: "#ffb800", blue: "#38bdf8", slate: "#94a3b8", orange: "#fb923c" };
+  const CAT_COLORS = { violet: "#005AFD", green: "#649AD3", gold: "#2F88E6", amber: "#0068DD", blue: "#2F88E6", slate: "#649AD3", orange: "#106BC4" };
   let screen = "home";
   let serverPlayers = null;
 

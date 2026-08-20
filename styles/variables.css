@@ -1,46 +1,46 @@
 :root {
-  --color-1: #070D13;
-  --color-2: #14222E;
-  --color-3: #33475A;
-  --color-4: #8FA3B5;
-  --color-5: #E2E8F0;
+  --color-1: #010E21;
+  --color-2: #0C2949;
+  --color-3: #106BC4;
+  --color-4: #649AD3;
+  --color-5: #EAF2FC;
 
-  --text-main: #E2E8F0;
-  --text-soft: rgba(226, 232, 240, 0.72);
-  --text-dim: rgba(226, 232, 240, 0.42);
+  --text-main: #EAF2FC;
+  --text-soft: rgba(234, 242, 252, 0.72);
+  --text-dim: rgba(234, 242, 252, 0.42);
 
-  /* фон «картина маслом»: глубокий тёмно-синий с мягкими сияниями */
+  /* фон: глубокая синева Telegram */
   --bg-gradient:
-    radial-gradient(120% 90% at 85% -10%, rgba(56, 189, 248, 0.12), transparent 55%),
-    radial-gradient(110% 80% at -10% 25%, rgba(167, 139, 250, 0.09), transparent 55%),
-    radial-gradient(130% 100% at 50% 110%, rgba(34, 211, 238, 0.08), transparent 60%),
-    linear-gradient(165deg, #070D13 0%, #0A141D 30%, #0D1B27 52%, #12232F 78%, #16293A 100%);
+    radial-gradient(120% 90% at 85% -10%, rgba(47, 136, 230, 0.16), transparent 55%),
+    radial-gradient(110% 80% at -10% 25%, rgba(0, 84, 197, 0.12), transparent 55%),
+    radial-gradient(130% 100% at 50% 110%, rgba(100, 154, 211, 0.1), transparent 60%),
+    linear-gradient(165deg, #010E21 0%, #041A38 30%, #06224A 52%, #0C2949 78%, #001F58 100%);
 
-  --glass-bg: rgba(14, 26, 38, 0.62);
-  --glass-bg-soft: rgba(26, 42, 58, 0.4);
-  --glass-border: rgba(143, 163, 181, 0.16);
-  --glass-border-strong: rgba(143, 163, 181, 0.3);
+  --glass-bg: rgba(12, 41, 73, 0.72);
+  --glass-bg-soft: rgba(16, 107, 196, 0.16);
+  --glass-border: rgba(100, 154, 211, 0.2);
+  --glass-border-strong: rgba(100, 154, 211, 0.42);
   --glass-blur: 20px;
 
   --radius-lg: 20px;
   --radius-md: 16px;
   --radius-sm: 12px;
 
-  --shadow-panel: 0 10px 36px rgba(4, 10, 16, 0.55);
-  --shadow-glow: 0 0 26px rgba(4, 10, 16, 0.5);
+  --shadow-panel: 0 10px 36px rgba(1, 14, 33, 0.6);
+  --shadow-glow: 0 0 26px rgba(1, 14, 33, 0.5);
 
   --accent-green: #34D399;
   --accent-red: #F87171;
   --accent-gold: #FFD76A;
 
-  /* акценты категорий */
-  --acc-home: #38BDF8;
-  --acc-cards: #A78BFA;
-  --acc-referrals: #FBBF24;
-  --acc-tasks: #34D399;
-  --acc-profile: #F472B6;
+  /* акценты категорий (синяя гамма) */
+  --acc-home: #2F88E6;
+  --acc-cards: #2F88E6;
+  --acc-referrals: #0068DD;
+  --acc-tasks: #005AFD;
+  --acc-profile: #649AD3;
 
-  --nav-height: 72px;
+  --nav-height: 64px;
   --topbar-height: 64px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);

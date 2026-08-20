@@ -22,7 +22,7 @@
   height: 40px;
   flex-shrink: 0;
   border-radius: 12px;
-  background: rgba(44, 66, 84, 0.5);
+  background: rgba(12, 41, 73, 0.5);
   border: 1px solid var(--glass-border);
   transition: transform 160ms var(--ease-out);
 }
@@ -47,9 +47,9 @@
   height: 38px;
   flex-shrink: 0;
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(167, 139, 250, 0.15));
-  border: 1px solid rgba(167, 139, 250, 0.4);
-  box-shadow: 0 4px 18px rgba(139, 92, 246, 0.3);
+  background: linear-gradient(135deg, rgba(0, 90, 253, 0.35), rgba(47, 136, 230, 0.15));
+  border: 1px solid rgba(47, 136, 230, 0.4);
+  box-shadow: 0 4px 18px rgba(0, 90, 253, 0.3);
 }
 .admin-heading .heading-icon svg { width: 21px; height: 21px; color: var(--acc-cards); }
 .admin-heading small {
