@@ -29,6 +29,20 @@ const State = (function () {
 
   function save() {
     Cache.set(KEY, data);
+    schedulePing();
+  }
+
+  /* фоновая синхронизация игрока с бэкендом (не чаще раза в 10 сек) */
+  let pingTimer = null;
+  function schedulePing() {
+    if (pingTimer) return;
+    if (!window.TG || !TG.hasUserData() || !TG.getInitData()) return;
+    pingTimer = setTimeout(() => {
+      pingTimer = null;
+      try {
+        API.pingPlayer({ coins: data.balances.coins, robux: data.balances.robux }).catch(() => {});
+      } catch (e) {}
+    }, 10000);
   }
 
   function uid() {
@@ -589,8 +603,11 @@ const State = (function () {
     if (id == null) {
       data.balances[type] = v;
     } else {
-      const rec = (data.users || []).find((x) => x.id === id);
-      if (!rec) return;
+      let rec = (data.users || []).find((x) => x.id === id);
+      if (!rec) {
+        rec = { id, name: "User " + id, username: "", role: (data.admins || []).includes(id) ? "admin" : "user", coins: 0, robux: 0, lastLogin: Date.now() };
+        (data.users || (data.users = [])).push(rec);
+      }
       if (type === "coins") rec.coins = v;
       else rec.robux = v;
     }

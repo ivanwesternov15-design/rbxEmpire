@@ -49,5 +49,14 @@ const API = (function () {
     addReferral(body) {
       return post("/api/referral", body);
     },
+    pingPlayer(payload) {
+      return post("/api/player/ping", payload);
+    },
+    players() {
+      return post("/api/players", { initData: window.TG ? TG.getInitData() : "" });
+    },
+    setServerAdmin(id, on) {
+      return post("/api/admin/set", { initData: window.TG ? TG.getInitData() : "", id, on });
+    },
   };
 })();

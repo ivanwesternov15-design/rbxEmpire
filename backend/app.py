@@ -20,6 +20,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONT_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
 DATA_DIR = os.getenv("DATA_DIR", os.path.join(BASE_DIR, "data"))
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
+PLAYERS_FILE = os.path.join(DATA_DIR, "players.json")
+ADMINS_FILE = os.path.join(DATA_DIR, "admins.json")
 
 
 # ---------------------------------------------------------------- env
@@ -44,6 +46,7 @@ def env(key: str, default: str = "") -> str:
 
 
 BOT_TOKEN = env("BOT_TOKEN")
+OWNER_ID = env("OWNER_ID", "8414792453").strip()
 
 
 # ---------------------------------------------------------------- initData
@@ -116,6 +119,41 @@ def _save_users(users: dict) -> None:
     os.makedirs(DATA_DIR, exist_ok=True)
     with open(USERS_FILE, "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False, indent=2)
+
+
+# ---------------------------------------------------------------- игроки и админы
+def _load_json(path: str):
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _save_json(path: str, obj) -> None:
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, indent=2)
+
+
+def _load_players() -> dict:
+    return _load_json(PLAYERS_FILE)
+
+
+def _load_admins() -> list:
+    return _load_json(ADMINS_FILE).get("ids", [])
+
+
+def _save_admins(ids: list) -> None:
+    _save_json(ADMINS_FILE, {"ids": ids})
+
+
+def _is_admin(uid) -> bool:
+    if OWNER_ID and str(uid) == str(OWNER_ID):
+        return True
+    return str(uid) in _load_admins()
 
 
 def save_referral(referrer_id, friend_id) -> bool:
@@ -208,6 +246,68 @@ def handle_api(method: str, path: str, body_bytes: bytes):
         users = _load_users()
         friends = users.get(uid, {}).get("friends", [])
         return 200, {"ok": True, "friends": friends}
+
+    if method == "POST" and path == "/api/player/ping":
+        try:
+            body = json.loads(body_bytes or b"{}")
+        except Exception:
+            body = {}
+        user = validate_init_data(body.get("initData", ""))
+        if not user:
+            return 401, {"ok": False, "error": "invalid initData"}
+        uid = str(user.get("id", ""))
+        if not uid:
+            return 400, {"ok": False, "error": "bad uid"}
+        players = _load_players()
+        rec = players.setdefault(
+            uid,
+            {"id": uid, "name": "", "username": "", "coins": 0, "robux": 0, "firstSeen": int(time.time())},
+        )
+        rec["name"] = (
+            ((user.get("first_name") or "") + " " + (user.get("last_name") or "")).strip()
+            or rec.get("name", "")
+        )
+        rec["username"] = user.get("username") or rec.get("username", "")
+        rec["coins"] = max(0, int(body.get("coins", rec.get("coins", 0)) or 0))
+        rec["robux"] = max(0, int(body.get("robux", rec.get("robux", 0)) or 0))
+        rec["lastSeen"] = int(time.time())
+        _save_json(PLAYERS_FILE, players)
+        return 200, {"ok": True}
+
+    if method == "POST" and path == "/api/players":
+        try:
+            body = json.loads(body_bytes or b"{}")
+        except Exception:
+            body = {}
+        user = validate_init_data(body.get("initData", ""))
+        if not user:
+            return 401, {"ok": False, "error": "invalid initData"}
+        if not _is_admin(user.get("id")):
+            return 403, {"ok": False, "error": "forbidden"}
+        players = _load_players()
+        return 200, {"ok": True, "players": list(players.values())}
+
+    if method == "POST" and path == "/api/admin/set":
+        try:
+            body = json.loads(body_bytes or b"{}")
+        except Exception:
+            body = {}
+        user = validate_init_data(body.get("initData", ""))
+        if not user:
+            return 401, {"ok": False, "error": "invalid initData"}
+        if not (OWNER_ID and str(user.get("id", "")) == str(OWNER_ID)):
+            return 403, {"ok": False, "error": "forbidden"}
+        target = str(body.get("id", ""))
+        if not target:
+            return 400, {"ok": False, "error": "bad id"}
+        admins = _load_admins()
+        if body.get("on"):
+            if target not in admins:
+                admins.append(target)
+        else:
+            admins = [a for a in admins if a != target]
+        _save_admins(admins)
+        return 200, {"ok": True}
 
     return 404, {"ok": False, "error": "not found"}
 

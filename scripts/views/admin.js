@@ -83,8 +83,15 @@ window.Views = Views;
       </div>`;
 
     const users = State.users();
-    const adminsCount = State.admins().length;
-    const list = users.length
+    const merged = users.slice();
+    if (Array.isArray(serverPlayers)) {
+      serverPlayers.forEach((p) => {
+        if (!merged.some((x) => x.id === parseInt(p.id, 10))) {
+          merged.push({ id: parseInt(p.id, 10), name: p.name || "User " + p.id, username: p.username || "", coins: p.coins || 0, robux: p.robux || 0, lastSeen: p.lastSeen });
+        }
+      });
+    }
+    const list = merged.length
       ? users
           .map((u) => {
             const isOwnerU = u.id === TG.OWNER_ID;
@@ -120,14 +127,19 @@ window.Views = Views;
           .join("")
       : `<div class="empty-state" style="padding:24px 0">${Icons.get("users")}<div class="empty-sub">${I18N.t("admin.users.empty")}</div></div>`;
 
+    const syncNote = Array.isArray(serverPlayers)
+      ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.synced")}</div>`
+      : "";
+
     return `
       <div class="admin-section">
         <h4>${Icons.get("shield")}${I18N.t("admin.users.me")} ${isOwner ? `<span class="badge badge-gold" style="margin-left:auto">${I18N.t("admin.users.role.owner")}</span>` : ""}</h4>
         ${meRow}
       </div>
       <div class="admin-section">
-        <h4>${Icons.get("users")}${I18N.t("admin.users.list")} <span class="h4-count">${users.length}</span></h4>
+        <h4>${Icons.get("users")}${I18N.t("admin.users.list")} <span class="h4-count">${merged.length}</span></h4>
         ${list}
+        ${syncNote}
         <div class="add-user-row">
           <input type="number" id="user-add-id" placeholder="123456789">
           <button class="btn btn-primary" id="user-add-btn">${Icons.get("plus")}${I18N.t("admin.users.add")}</button>
@@ -136,6 +148,14 @@ window.Views = Views;
   }
 
   function bindUsers(root) {
+    API.players()
+      .then((res) => {
+        if (res && Array.isArray(res.players)) {
+          serverPlayers = res.players;
+          render();
+        }
+      })
+      .catch(() => {});
     root.querySelectorAll("[data-bal-save]").forEach((b) => {
       b.addEventListener("click", () => {
         const type = b.getAttribute("data-bal-type");
@@ -158,6 +178,7 @@ window.Views = Views;
         const id = parseInt(b.getAttribute("data-admin-toggle"), 10);
         const on = !State.isAdminId(id);
         State.setAdminRole(id, on);
+        API.setServerAdmin(id, on).catch(() => {});
         UI.haptic(on ? "success" : "light");
         UI.toast(I18N.t(on ? "admin.users.admin.granted" : "admin.users.admin.revoked"), on ? "check" : "info");
         render();
@@ -664,6 +685,7 @@ window.Views = Views;
   ];
   const CAT_COLORS = { violet: "#8b5cf6", green: "#4ade80", gold: "#ffd76a", amber: "#ffb800", blue: "#38bdf8", slate: "#94a3b8" };
   let screen = "home";
+  let serverPlayers = null;
 
   function catCount(id) {
     const s = State.get();
