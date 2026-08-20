@@ -597,6 +597,7 @@ const State = (function () {
     if (!on && has) data.admins = data.admins.filter((x) => x !== id);
     const rec = (data.users || []).find((x) => x.id === id);
     if (rec) rec.role = on ? "admin" : "user";
+    if (window.UsersStore) UsersStore.update(id, { role: on ? "admin" : "user" });
     save();
     emit();
   }
@@ -666,6 +667,7 @@ const State = (function () {
     if (id === TG.getUser().id || id === TG.OWNER_ID) return;
     data.users = (data.users || []).filter((x) => x.id !== id);
     setAdminRole(id, false);
+    if (window.UsersStore) UsersStore.remove(id);
     save();
     emit();
   }

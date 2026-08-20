@@ -189,6 +189,8 @@ window.Views = Views;
       b.addEventListener("click", () => {
         const id = parseInt(b.getAttribute("data-user-del"), 10);
         State.removeUser(id);
+        API.removeServerPlayer(id).catch(() => {});
+        if (Array.isArray(serverPlayers)) serverPlayers = serverPlayers.filter((p) => parseInt(p.id, 10) !== id);
         UI.haptic("light");
         UI.toast(I18N.t("admin.users.removed"), "info");
         render();

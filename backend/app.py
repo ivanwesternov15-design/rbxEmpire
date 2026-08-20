@@ -288,6 +288,29 @@ def handle_api(method: str, path: str, body_bytes: bytes):
         players = _load_players()
         return 200, {"ok": True, "players": list(players.values())}
 
+    if method == "POST" and path == "/api/player/remove":
+        try:
+            body = json.loads(body_bytes or b"{}")
+        except Exception:
+            body = {}
+        user = validate_init_data(body.get("initData", ""))
+        if not user:
+            return 401, {"ok": False, "error": "invalid initData"}
+        if not _is_admin(user.get("id")):
+            return 403, {"ok": False, "error": "forbidden"}
+        target = str(body.get("id", ""))
+        if not target:
+            return 400, {"ok": False, "error": "bad id"}
+        if str(user.get("id")) == target:
+            return 400, {"ok": False, "error": "cannot remove self"}
+        players = _load_players()
+        if target in players:
+            del players[target]
+            _save_json(PLAYERS_FILE, players)
+        admins = [a for a in _load_admins() if a != target]
+        _save_admins(admins)
+        return 200, {"ok": True, "removed": target}
+
     if method == "POST" and path == "/api/admin/set":
         try:
             body = json.loads(body_bytes or b"{}")

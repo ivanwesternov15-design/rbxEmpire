@@ -50,10 +50,13 @@ const API = (function () {
       return post("/api/referral", body);
     },
     pingPlayer(payload) {
-      return post("/api/player/ping", payload);
+      return post("/api/player/ping", Object.assign({ initData: window.TG ? TG.getInitData() : "" }, payload || {}));
     },
     players() {
       return post("/api/players", { initData: window.TG ? TG.getInitData() : "" });
+    },
+    removeServerPlayer(id) {
+      return post("/api/player/remove", { initData: window.TG ? TG.getInitData() : "", id });
     },
     setServerAdmin(id, on) {
       return post("/api/admin/set", { initData: window.TG ? TG.getInitData() : "", id, on });
