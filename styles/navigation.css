@@ -23,38 +23,43 @@
 .topbar-verified.owner { color: var(--accent-gold); }
 .topbar-verified.admin { color: var(--accent-red); }
 
-/* анимированная обводка аватарки (вращающаяся дуга) */
+/* анимированная обводка аватарки (переливающийся сине-голубой градиент, без вращения) */
 .avatar-ring {
   position: relative;
   flex-shrink: 0;
   display: inline-flex;
   border-radius: 50%;
   padding: 3px;
-  background: conic-gradient(from 0deg, transparent 10deg, #a78bfa 60deg, transparent 130deg, transparent 200deg, #ffd76a 250deg, transparent 330deg);
-  animation: ringSpin 2.6s linear infinite;
+  background: linear-gradient(120deg, #1d4ed8, #38bdf8 35%, #7dd3fc 50%, #38bdf8 65%, #1d4ed8);
+  background-size: 300% 300%;
+  background-position: 0% 50%;
+  animation: ringGlow 3.2s ease-in-out infinite;
 }
-@keyframes ringSpin { to { transform: rotate(360deg); } }
+@keyframes ringGlow {
+  0%, 100% { background-position: 0% 50%; box-shadow: 0 0 8px rgba(56, 189, 248, 0.35); }
+  50% { background-position: 100% 50%; box-shadow: 0 0 16px rgba(125, 211, 252, 0.6); }
+}
 .avatar-ring .avatar { position: relative; z-index: 1; border: 0; }
 
 /* балансы в топбаре */
-.topbar-bals { display: flex; align-items: center; gap: 6px; }
+.topbar-bals { display: flex; align-items: center; gap: 5px; }
 .topbar-bal {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 10px;
-  border-radius: 12px;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 10px;
   background: rgba(26, 42, 58, 0.5);
   border: 1px solid var(--glass-border);
   white-space: nowrap;
 }
-.topbar-bal img { width: 20px; height: 20px; }
-.topbar-bal b { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.topbar-bal img { width: 17px; height: 17px; }
+.topbar-bal b { font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .topbar-bal.bal-robux b { color: #7dd3fc; }
 .topbar-bal.bal-coins b { color: var(--accent-gold); }
-.topbar-inner.compact .topbar-bal { padding: 4px 8px; }
-.topbar-inner.compact .topbar-bal img { width: 17px; height: 17px; }
-.topbar-inner.compact .topbar-bal b { font-size: 12.5px; }
+.topbar-inner.compact .topbar-bal { padding: 3px 7px; }
+.topbar-inner.compact .topbar-bal img { width: 15px; height: 15px; }
+.topbar-inner.compact .topbar-bal b { font-size: 12px; }
 
 /* кнопка истории в топбаре + бейдж непрочитанных */
 .hist-btn {
