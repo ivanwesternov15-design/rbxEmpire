@@ -84,9 +84,8 @@
   function supportHtml() {
     return `
       <div class="panel glass-panel" style="padding:14px">
-        <div class="text-soft" style="font-size:13px;margin-bottom:12px">${I18N.t("profile.support.sub")}</div>
         <button class="list-row" id="support-owner" style="width:100%;text-align:left">
-          <span class="row-icon">${Icons.get("support")}</span>
+          <span class="row-icon">${Icons.get("chat")}</span>
           <span><span class="row-title" style="display:block">${I18N.t("profile.support.owner")}</span><span class="row-sub">@darkgeniy</span></span>
         </button>
       </div>`;
