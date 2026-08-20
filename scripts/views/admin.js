@@ -21,14 +21,6 @@ window.Views = Views;
     { v: "daily", l: "task.t.daily" },
     { v: "custom", l: "task.t.custom" },
   ];
-  const TABS = [
-    { id: "users", icon: "users", key: "admin.tabs.users" },
-    { id: "tasks", icon: "tasks", key: "admin.tabs.tasks" },
-    { id: "cards", icon: "cards", key: "admin.tabs.cards" },
-    { id: "shop", icon: "shop", key: "admin.tabs.shop" },
-    { id: "staking", icon: "clock", key: "admin.tabs.staking" },
-    { id: "system", icon: "settings", key: "admin.tabs.system" },
-  ];
   let activeTab = "users";
 
   function esc(s) {
@@ -647,41 +639,104 @@ window.Views = Views;
         bindUsers(root);
     }
   }
-  function tabBar() {
-    return `
-      <div class="admin-tabs">
-        ${TABS.map(
-          (t) => `
-          <button class="admin-tab ${activeTab === t.id ? "active" : ""}" data-tab="${t.id}">
-            ${Icons.get(t.icon)}<span>${I18N.t(t.key)}</span>
-          </button>`
-        ).join("")}
-      </div>`;
-  }
 
   function statCard(icon, value, label) {
     return `<div class="admin-stat"><span class="stat-icon">${Icons.get(icon)}</span><b>${value}</b><span>${label}</span></div>`;
   }
 
-  Views.admin = function () {
-    const isPage = !!document.getElementById("admin-root");
-    const sub = isPage ? document.getElementById("admin-root") : document.getElementById("profile-sub");
-    if (!sub) return;
+  /* ================= ДАШБОРД: всё по своим местам ================= */
+  const CATS = [
+    { id: "users", icon: "users", color: "violet" },
+    { id: "tasks", icon: "tasks", color: "green" },
+    { id: "cards", icon: "cards", color: "gold" },
+    { id: "shop", icon: "shop", color: "amber" },
+    { id: "staking", icon: "clock", color: "blue" },
+    { id: "system", icon: "settings", color: "slate" },
+  ];
+  const CAT_COLORS = { violet: "#8b5cf6", green: "#4ade80", gold: "#ffd76a", amber: "#ffb800", blue: "#38bdf8", slate: "#94a3b8" };
+  let screen = "home";
+
+  function catCount(id) {
     const s = State.get();
-    sub.innerHTML = `
-      ${isPage ? "" : `
-      <div class="sub-header">
-        <button class="back-btn" id="admin-back">${Icons.get("arrow")}${I18N.t("profile.title")}</button>
-        <h3>${Icons.get("shield")}${I18N.t("admin.title")}</h3>
-      </div>`}
+    if (id === "users") return State.users().length;
+    if (id === "tasks") return s.tasks.length;
+    if (id === "shop") return s.shop.length;
+    return null;
+  }
+
+  function statTiles() {
+    const s = State.get();
+    return `
       <div class="admin-stats">
         ${statCard("cards", s.inventory.length, I18N.t("cards.title"))}
         ${statCard("users", State.users().length, I18N.t("admin.users.list"))}
         ${statCard("coin", UI.fmt(s.balances.coins), I18N.t("stats.coins"))}
         ${statCard("robux", UI.fmt(s.balances.robux), I18N.t("stats.robux"))}
+      </div>`;
+  }
+
+  function homeHtml() {
+    const cats = CATS.map((c) => {
+      const cnt = catCount(c.id);
+      return `
+        <button class="admin-cat" data-open="${c.id}">
+          <span class="ac-icon" style="color:${CAT_COLORS[c.color]};border-color:${CAT_COLORS[c.color]}44;background:${CAT_COLORS[c.color]}1a">${Icons.get(c.icon)}</span>
+          <span class="ac-body">
+            <span class="ac-name">${I18N.t("admin.tabs." + c.id)}</span>
+            <span class="ac-desc">${I18N.t("admin.cat.d." + c.id)}</span>
+          </span>
+          ${cnt != null ? `<span class="ac-count">${cnt}</span>` : ""}
+          <span class="ac-arrow">${Icons.get("arrow")}</span>
+        </button>`;
+    }).join("");
+    return `
+      <div class="admin-home">
+        <div class="admin-home-head">
+          <div>
+            <h3>${I18N.t("admin.home.title")}</h3>
+            <p>${I18N.t("admin.home.sub")}</p>
+          </div>
+          <span class="home-shield">${Icons.get("shield")}</span>
+        </div>
+        ${statTiles()}
+        <div class="admin-cats">${cats}</div>
+      </div>`;
+  }
+
+  function openTab(id) {
+    activeTab = id;
+    screen = id;
+    render();
+    const sub = screen === "home" ? null : document.querySelector("#admin-body");
+    if (sub) sub.scrollTop = 0;
+  }
+
+  function tabScreenHtml(id) {
+    const c = CATS.find((x) => x.id === id) || CATS[0];
+    return `
+      <div class="admin-tab-header">
+        <button class="back-btn" id="cat-back">${Icons.get("arrow")}</button>
+        <span class="at-icon" style="color:${CAT_COLORS[c.color]};border-color:${CAT_COLORS[c.color]}44;background:${CAT_COLORS[c.color]}1a">${Icons.get(c.icon)}</span>
+        <h3>${I18N.t("admin.tabs." + c.id)}</h3>
       </div>
-      ${tabBar()}
       <div class="admin-body" id="admin-body">${sectionHtml()}</div>`;
+  }
+
+  function render() {
+    const isPage = !!document.getElementById("admin-root");
+    const sub = isPage ? document.getElementById("admin-root") : document.getElementById("profile-sub");
+    if (!sub) return;
+    let html = "";
+    if (!isPage && screen === "home") {
+      html += `
+        <div class="sub-header">
+          <button class="back-btn" id="admin-back">${Icons.get("arrow")}${I18N.t("profile.title")}</button>
+          <h3>${Icons.get("shield")}${I18N.t("admin.title")}</h3>
+        </div>`;
+    }
+    html += screen === "home" ? homeHtml() : tabScreenHtml(screen);
+    sub.innerHTML = html;
+
     const back = sub.querySelector("#admin-back");
     if (back) {
       back.addEventListener("click", () => {
@@ -692,16 +747,25 @@ window.Views = Views;
         }
       });
     }
-    sub.querySelectorAll(".admin-tab").forEach((b) => {
-      b.addEventListener("click", () => {
-        activeTab = b.getAttribute("data-tab");
+    const catBack = sub.querySelector("#cat-back");
+    if (catBack) {
+      catBack.addEventListener("click", () => {
         UI.haptic("light");
-        const body = sub.querySelector("#admin-body");
-        body.innerHTML = sectionHtml();
-        bindSection(body);
-        b.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+        screen = "home";
+        render();
+      });
+    }
+    sub.querySelectorAll("[data-open]").forEach((b) => {
+      b.addEventListener("click", () => {
+        UI.haptic("light");
+        openTab(b.getAttribute("data-open"));
       });
     });
     bindSection(sub);
+  }
+
+  Views.admin = function () {
+    screen = "home";
+    render();
   };
 })();
