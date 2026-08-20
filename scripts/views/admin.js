@@ -32,11 +32,6 @@ window.Views = Views;
   function rarityOptions(sel) {
     return State.RARITIES.map((r) => `<option value="${r}" ${sel === r ? "selected" : ""}>${I18N.t("r." + r)}</option>`).join("");
   }
-  function roleBadge(id) {
-    if (id === TG.OWNER_ID) return `<span class="badge badge-gold">${I18N.t("admin.users.role.owner")}</span>`;
-    if (State.isAdminId(id)) return `<span class="badge badge-red">${I18N.t("admin.users.role.admin")}</span>`;
-    return `<span class="badge">${I18N.t("admin.users.role.user")}</span>`;
-  }
   function balBtns(id, type, isMe) {
     const p = isMe ? "data-bal" : "data-user-bal";
     const idAttr = isMe ? "" : `data-user-id="${id}"`;
@@ -50,91 +45,97 @@ window.Views = Views;
   }
 
   /* ================= ПОЛЬЗОВАТЕЛИ ================= */
+  function roleBadgeBig(id) {
+    if (id === TG.OWNER_ID) return `<span class="au-role role-owner">${Icons.get("shield")}${I18N.t("admin.users.role.owner")}</span>`;
+    if (State.isAdminId(id)) return `<span class="au-role role-admin">${Icons.get("shield")}${I18N.t("admin.users.role.admin")}</span>`;
+    return `<span class="au-role">${I18N.t("admin.users.role.user")}</span>`;
+  }
+
   function usersSection() {
     const me = TG.getUser();
     const s = State.get();
     const meName = ((me.firstName || "") + " " + (me.lastName || "")).trim() || "User";
+    const isOwner = State.isOwner();
     const meRow = `
-      <div class="admin-user" id="me-card">
+      <div class="au-hero" id="me-card">
+        <div class="au-hero-glow"></div>
         <div class="au-head">
-          ${UI.avatarHtml(me, 42)}
+          <div class="au-ava-wrap">
+            ${UI.avatarHtml(me, 54)}
+            <span class="au-ava-badge">${Icons.get("verified")}</span>
+          </div>
           <div class="au-meta">
-            <div class="au-name">${esc(meName)} ${roleBadge(me.id)}</div>
-            <div class="au-id">ID: ${me.id}${me.username ? " @" + esc(me.username) : ""}</div>
+            <div class="au-name">${esc(meName)}</div>
+            ${roleBadgeBig(me.id)}
+            <div class="au-id">ID: ${me.id}${me.username ? " · @" + esc(me.username) : ""}</div>
           </div>
         </div>
         <div class="au-bals">
           <div class="au-bal">
-            <span>${Icons.get("coin")}${I18N.t("admin.users.coins")}</span>
-            <b>${UI.fmt(s.balances.coins)}</b>
+            <div class="au-bal-top"><span>${Icons.get("coin")}${I18N.t("admin.users.coins")}</span><b>${UI.fmt(s.balances.coins)}</b></div>
             <div class="au-btns">${balBtns(me.id, "coins", true)}</div>
           </div>
           <div class="au-bal">
-            <span>${Icons.get("robux")}${I18N.t("admin.users.robux")}</span>
-            <b>${UI.fmt(s.balances.robux)}</b>
+            <div class="au-bal-top"><span>${Icons.get("robux")}${I18N.t("admin.users.robux")}</span><b>${UI.fmt(s.balances.robux)}</b></div>
             <div class="au-btns">${balBtns(me.id, "robux", true)}</div>
           </div>
         </div>
-        <div class="au-actions">
-          <button class="btn btn-ghost" id="me-daily">${Icons.get("refresh")}${I18N.t("admin.users.daily")}</button>
-          <button class="btn btn-ghost" id="me-grant">${Icons.get("cards")}${I18N.t("admin.users.grant")}</button>
-          <button class="btn btn-danger" id="me-reset">${Icons.get("trash")}${I18N.t("admin.users.reset")}</button>
+        <div class="au-quick">
+          <button class="au-quick-btn" id="me-grant">${Icons.get("cards")}<span>${I18N.t("admin.users.grant")}</span></button>
+          <button class="au-quick-btn" id="me-daily">${Icons.get("refresh")}<span>${I18N.t("admin.users.daily")}</span></button>
+          <button class="au-quick-btn danger" id="me-reset">${Icons.get("trash")}<span>${I18N.t("admin.users.reset")}</span></button>
         </div>
       </div>`;
 
     const users = State.users();
+    const adminsCount = State.admins().length;
     const list = users.length
       ? users
           .map((u) => {
-            const isOwner = u.id === TG.OWNER_ID;
+            const isOwnerU = u.id === TG.OWNER_ID;
             const isAdmin = State.isAdminId(u.id);
             return `
-            <div class="admin-user compact">
+            <div class="admin-user">
               <div class="au-head">
-                ${UI.avatarHtml({ firstName: u.name, id: u.id }, 36)}
+                ${UI.avatarHtml({ firstName: u.name, id: u.id }, 40)}
                 <div class="au-meta">
-                  <div class="au-name">${esc(u.name)} ${roleBadge(u.id)}</div>
-                  <div class="au-id">ID: ${u.id}${u.username ? " @" + esc(u.username) : ""}</div>
+                  <div class="au-name">${esc(u.name)}</div>
+                  ${roleBadgeBig(u.id)}
+                  <div class="au-id">ID: ${u.id}${u.username ? " · @" + esc(u.username) : ""}</div>
                 </div>
+                <button class="au-switch ${isAdmin ? "on" : ""}" data-admin-toggle="${u.id}" ${isOwnerU ? "disabled" : ""} title="${isOwnerU ? "" : (isAdmin ? I18N.t("admin.users.admin.off") : I18N.t("admin.users.admin.on"))}">
+                  <span class="au-switch-knob"></span>
+                </button>
               </div>
               <div class="au-bals">
                 <div class="au-bal">
-                  <span>${Icons.get("coin")}${I18N.t("admin.users.coins")}</span>
-                  <b>${UI.fmt(u.coins || 0)}</b>
+                  <div class="au-bal-top"><span>${Icons.get("coin")}${I18N.t("admin.users.coins")}</span><b>${UI.fmt(u.coins || 0)}</b></div>
                   <div class="au-btns">${balBtns(u.id, "coins", false)}</div>
                 </div>
                 <div class="au-bal">
-                  <span>${Icons.get("robux")}${I18N.t("admin.users.robux")}</span>
-                  <b>${UI.fmt(u.robux || 0)}</b>
+                  <div class="au-bal-top"><span>${Icons.get("robux")}${I18N.t("admin.users.robux")}</span><b>${UI.fmt(u.robux || 0)}</b></div>
                   <div class="au-btns">${balBtns(u.id, "robux", false)}</div>
                 </div>
               </div>
-              <div class="au-actions">
-                <button class="btn ${isAdmin ? "btn-green" : "btn-ghost"}" data-admin-toggle="${u.id}" ${isOwner ? "disabled" : ""}>
-                  ${Icons.get("shield")}${isAdmin ? I18N.t("admin.users.admin.off") : I18N.t("admin.users.admin.on")}
-                </button>
-                <button class="btn btn-danger" data-user-del="${u.id}" ${isOwner ? "disabled" : ""}>${Icons.get("trash")}${I18N.t("admin.shop.remove")}</button>
+              <div class="au-row-actions">
+                <button class="btn btn-ghost" data-user-del="${u.id}" ${isOwnerU ? "disabled" : ""}>${Icons.get("trash")}${I18N.t("admin.shop.remove")}</button>
               </div>
             </div>`;
           })
           .join("")
-      : `<div class="empty-state" style="padding:22px 0">${Icons.get("users")}<div class="empty-sub">${I18N.t("admin.users.empty")}</div></div>`;
+      : `<div class="empty-state" style="padding:24px 0">${Icons.get("users")}<div class="empty-sub">${I18N.t("admin.users.empty")}</div></div>`;
 
     return `
       <div class="admin-section">
-        <h4>${Icons.get("users")}${I18N.t("admin.users.me")}</h4>
+        <h4>${Icons.get("shield")}${I18N.t("admin.users.me")} ${isOwner ? `<span class="badge badge-gold" style="margin-left:auto">${I18N.t("admin.users.role.owner")}</span>` : ""}</h4>
         ${meRow}
       </div>
       <div class="admin-section">
-        <h4>${Icons.get("users")}${I18N.t("admin.users.list")}</h4>
+        <h4>${Icons.get("users")}${I18N.t("admin.users.list")} <span class="h4-count">${users.length}</span></h4>
         ${list}
-        <div class="admin-card" style="margin-top:10px">
-          <div class="ac-title">${I18N.t("admin.users.add")}</div>
-          <div class="admin-inline">
-            <span class="ai-label">ID</span>
-            <input type="number" id="user-add-id" placeholder="123456789">
-          </div>
-          <button class="btn btn-primary" id="user-add-btn" style="width:100%;margin-top:8px">${Icons.get("plus")}${I18N.t("admin.users.add")}</button>
+        <div class="add-user-row">
+          <input type="number" id="user-add-id" placeholder="123456789">
+          <button class="btn btn-primary" id="user-add-btn">${Icons.get("plus")}${I18N.t("admin.users.add")}</button>
         </div>
       </div>`;
   }
@@ -146,6 +147,7 @@ window.Views = Views;
         const delta = parseInt(b.getAttribute("data-bal"), 10);
         State.modifyBalance(type, delta);
         UI.haptic("light");
+        render();
       });
     });
     root.querySelectorAll("[data-user-bal]").forEach((b) => {
@@ -155,6 +157,7 @@ window.Views = Views;
         const delta = parseInt(b.getAttribute("data-user-bal"), 10);
         State.setUserBalance(id, type, delta);
         UI.haptic("light");
+        render();
       });
     });
     root.querySelectorAll("[data-admin-toggle]").forEach((b) => {
@@ -164,6 +167,7 @@ window.Views = Views;
         State.setAdminRole(id, on);
         UI.haptic(on ? "success" : "light");
         UI.toast(I18N.t(on ? "admin.users.admin.granted" : "admin.users.admin.revoked"), on ? "check" : "info");
+        render();
       });
     });
     root.querySelectorAll("[data-user-del]").forEach((b) => {
@@ -172,6 +176,7 @@ window.Views = Views;
         State.removeUser(id);
         UI.haptic("light");
         UI.toast(I18N.t("admin.users.removed"), "info");
+        render();
       });
     });
     const meDaily = root.querySelector("#me-daily");
@@ -209,6 +214,7 @@ window.Views = Views;
           State.resetUserProgress(TG.getUser().id);
           UI.haptic("success");
           UI.toast(I18N.t("admin.users.reset.done"), "check");
+          render();
           if (window.ADMIN_OPEN === false) Views.render("profile");
         });
       });
@@ -224,6 +230,7 @@ window.Views = Views;
         State.upsertUser({ id, firstName: "User " + id, username: "" });
         UI.haptic("success");
         UI.toast(I18N.t("admin.users.added"), "check");
+        render();
       });
     }
   }
@@ -321,6 +328,7 @@ window.Views = Views;
       UI.haptic("success");
       UI.toast(I18N.t("admin.tasks.saved"), "check");
       m.close();
+      render();
     };
     m.querySelector("#tm-save").addEventListener("click", save);
     m.querySelectorAll("input").forEach((i) => i.addEventListener("keydown", (e) => { if (e.key === "Enter") save(); }));
@@ -337,6 +345,7 @@ window.Views = Views;
       b.addEventListener("click", () => {
         State.removeTask(b.getAttribute("data-task-del"));
         UI.toast(I18N.t("admin.tasks.removed"), "info");
+        render();
       });
     });
     root.querySelectorAll("[data-task-force]").forEach((b) => {
@@ -348,6 +357,7 @@ window.Views = Views;
         if (granted) {
           UI.popup("+" + (granted.coins || granted.robux) + (granted.coins ? " " + I18N.t("stats.coins") : " " + I18N.t("stats.robux")), granted.coins ? "coin" : "robux");
         }
+        render();
       });
     });
     root.querySelectorAll("[data-task-inc]").forEach((b) => {
@@ -355,6 +365,7 @@ window.Views = Views;
         const id = b.getAttribute("data-task-inc");
         const t = State.get().tasks.find((x) => x.id === id);
         if (t) State.setTaskProgress(id, t.progress + 1);
+        render();
       });
     });
     root.querySelectorAll("[data-task-dec]").forEach((b) => {
@@ -362,6 +373,7 @@ window.Views = Views;
         const id = b.getAttribute("data-task-dec");
         const t = State.get().tasks.find((x) => x.id === id);
         if (t) State.setTaskProgress(id, t.progress - 1);
+        render();
       });
     });
     const addBtn = root.querySelector("#task-add-btn");
@@ -508,7 +520,10 @@ window.Views = Views;
 
   function bindShop(root) {
     root.querySelectorAll("[data-shop-del]").forEach((b) => {
-      b.addEventListener("click", () => State.removeShopOffer(b.getAttribute("data-shop-del")));
+      b.addEventListener("click", () => {
+        State.removeShopOffer(b.getAttribute("data-shop-del"));
+        render();
+      });
     });
     const publish = root.querySelector("#admin-shop-publish");
     if (publish) {
@@ -519,6 +534,7 @@ window.Views = Views;
         State.addShopOffer({ rarity, price, qty });
         UI.haptic("success");
         UI.toast(I18N.t("admin.shop.published"), "check");
+        render();
       });
     }
   }

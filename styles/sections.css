@@ -712,21 +712,76 @@
   border: 1px solid var(--glass-border);
   margin-bottom: 10px;
 }
-.au-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.au-head { display: flex; align-items: center; gap: 12px; }
 .au-head .avatar { border: 2px solid rgba(167, 139, 250, 0.35); }
 .au-meta { flex: 1; min-width: 0; }
 .au-name { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-weight: 800; font-size: 15px; color: var(--text-main); }
 .au-id { font-size: 12px; color: var(--text-dim); margin-top: 3px; font-variant-numeric: tabular-nums; }
-.au-bals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* --- hero-карточка текущего пользователя --- */
+.au-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(7, 15, 22, 0.6);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+}
+.au-hero-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(200px 120px at 10% 0%, rgba(139, 92, 246, 0.22), transparent);
+  pointer-events: none;
+}
+.au-ava-wrap { position: relative; flex-shrink: 0; }
+.au-ava-wrap .avatar { border: 2px solid rgba(167, 139, 250, 0.45); }
+.au-ava-badge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ffd76a, #ffb800);
+  border: 2px solid #0b1620;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.au-ava-badge svg { width: 12px; height: 12px; color: #3a2c00; }
+
+/* --- роль --- */
+.au-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  padding: 3px 9px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  background: rgba(143, 163, 181, 0.14);
+  border: 1px solid rgba(143, 163, 181, 0.3);
+  color: var(--text-soft);
+}
+.au-role svg { width: 12px; height: 12px; }
+.au-role.role-owner { background: rgba(255, 215, 106, 0.16); border-color: rgba(255, 215, 106, 0.45); color: var(--accent-gold); }
+.au-role.role-admin { background: rgba(248, 113, 113, 0.16); border-color: rgba(248, 113, 113, 0.45); color: #ffb4b4; }
+
+/* --- балансы --- */
+.au-bals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; position: relative; }
 .au-bal {
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 12px;
+  border-radius: 14px;
   background: rgba(4, 10, 16, 0.6);
   border: 1px solid var(--glass-border);
 }
-.au-bal > span { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; }
-.au-bal > span svg { width: 13px; height: 13px; }
-.au-bal > b { display: block; font-size: 17px; margin: 3px 0 10px; font-variant-numeric: tabular-nums; color: var(--text-main); }
+.au-bal-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 10px; }
+.au-bal-top span { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; }
+.au-bal-top span svg { width: 13px; height: 13px; }
+.au-bal-top b { font-size: 17px; font-variant-numeric: tabular-nums; color: var(--text-main); }
 .au-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
 .bal-btn {
   min-height: 40px;
@@ -740,9 +795,89 @@
 .bal-btn:active { transform: scale(0.9); }
 .bal-btn.pos { color: #9df2c0; background: rgba(74, 222, 128, 0.13); border-color: rgba(74, 222, 128, 0.32); }
 .bal-btn.neg { color: #ffc9c9; background: rgba(248, 113, 113, 0.13); border-color: rgba(248, 113, 113, 0.32); }
-.au-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
-.au-actions .btn { justify-content: center; min-height: 42px; font-size: 12px; padding: 8px 6px; }
-.au-actions .btn svg { width: 15px; height: 15px; }
+
+/* --- быстрые действия --- */
+.au-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; position: relative; }
+.au-quick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 64px;
+  justify-content: center;
+  border-radius: 14px;
+  background: rgba(167, 139, 250, 0.09);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  color: var(--text-soft);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  transition: transform 140ms var(--ease-out);
+}
+.au-quick-btn svg { width: 20px; height: 20px; color: var(--acc-cards); }
+.au-quick-btn:active { transform: scale(0.94); }
+.au-quick-btn.danger { background: rgba(248, 113, 113, 0.08); border-color: rgba(248, 113, 113, 0.25); }
+.au-quick-btn.danger svg { color: #ff8f8f; }
+
+/* --- переключатель админки --- */
+.au-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 48px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(143, 163, 181, 0.18);
+  border: 1px solid var(--glass-border);
+  transition: background 180ms var(--ease-out), border-color 180ms var(--ease-out);
+}
+.au-switch .au-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #c9d6e0;
+  transition: transform 180ms var(--ease-out), background 180ms var(--ease-out);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.au-switch.on { background: linear-gradient(135deg, #8b5cf6, #a78bfa); border-color: rgba(139, 92, 246, 0.6); }
+.au-switch.on .au-switch-knob { transform: translateX(20px); background: #fff; }
+.au-switch:disabled { opacity: 0.55; }
+
+.au-row-actions { margin-top: 12px; }
+.au-row-actions .btn { width: 100%; min-height: 38px; justify-content: center; }
+.add-user-row { display: flex; gap: 8px; margin-top: 12px; }
+.add-user-row input {
+  flex: 1;
+  min-width: 0;
+  min-height: 46px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(7, 15, 22, 0.7);
+  border: 1px solid var(--glass-border);
+  font-size: 15px;
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+}
+.add-user-row input:focus { border-color: var(--acc-cards); box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.18); }
+.add-user-row .btn { min-height: 46px; white-space: nowrap; }
+.h4-count {
+  margin-left: auto;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(167, 139, 250, 0.14);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  color: var(--acc-cards);
+  font-size: 12px;
+  font-weight: 800;
+}
 .badge-red { color: #ffd9d9; background: rgba(248, 113, 113, 0.18); border-color: rgba(248, 113, 113, 0.4); }
 .badge-gold svg, .badge-red svg, .badge svg { width: 12px; height: 12px; }
 
