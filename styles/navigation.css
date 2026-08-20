@@ -19,7 +19,7 @@
 .topbar-id { font-size: 12px; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* галочка верификации: владелец — жёлтая, админ — красная */
-.topbar-verified { width: 17px; height: 17px; flex-shrink: 0; transform: translateY(-2px); filter: drop-shadow(0 0 6px currentColor); }
+.topbar-verified { width: 17px; height: 17px; flex-shrink: 0; transform: translateY(0); }
 .topbar-verified.owner { color: var(--accent-gold); }
 .topbar-verified.admin { color: var(--accent-red); }
 
