@@ -150,7 +150,7 @@ window.Views = Views;
     const syncNote = Array.isArray(serverPlayers)
       ? `<div class="sync-note ok">${Icons.get("refresh")}${I18N.t("admin.users.synced")}: ${serverPlayers.length}</div>`
       : serverStatus === 401
-      ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.auth")} · ${initDataDiag()}</div>`
+      ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.auth")}${serverAuthReason ? " (" + serverAuthReason + ")" : ""} · ${initDataDiag()}</div>`
       : serverStatus === 403
       ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.forbidden")}</div>`
       : serverStatus === false
@@ -763,6 +763,7 @@ window.Views = Views;
   }
 
   let retried401 = false;
+  let serverAuthReason = "";
   function loadServerPlayers() {
     return API.players()
       .then((res) => {
@@ -775,6 +776,7 @@ window.Views = Views;
           }
         } else {
           const st = res && res.status ? res.status : false;
+          if (res && res.status === 401) serverAuthReason = res.error || "";
           if (serverStatus !== st) {
             serverStatus = st;
             if (screen === "users") render();

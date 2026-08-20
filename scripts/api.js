@@ -11,7 +11,11 @@ const API = (function () {
       const timer = setTimeout(() => ctrl.abort(), timeoutMs);
       const r = await fetch(path, { headers: { Accept: "application/json" }, signal: ctrl.signal });
       clearTimeout(timer);
-      if (!r.ok) return { ok: false, status: r.status, network: false };
+      if (!r.ok) {
+        let err = "";
+        try { err = (await r.json()).error || ""; } catch (e) {}
+        return { ok: false, status: r.status, error: err, network: false };
+      }
       return await r.json();
     } catch (e) {
       return null; // сеть недоступна / таймаут
@@ -29,7 +33,11 @@ const API = (function () {
         signal: ctrl.signal,
       });
       clearTimeout(timer);
-      if (!r.ok) return { ok: false, status: r.status, network: false };
+      if (!r.ok) {
+        let err = "";
+        try { err = (await r.json()).error || ""; } catch (e) {}
+        return { ok: false, status: r.status, error: err, network: false };
+      }
       return await r.json();
     } catch (e) {
       return null; // сеть недоступна / таймаут

@@ -60,34 +60,41 @@ def _parse_init_data(init_data: str) -> dict:
     return data
 
 
-def validate_init_data(init_data: str):
-    """dict с пользователем или None, если подпись неверна или протухла."""
+def check_init_data(init_data: str):
+    """(ok, user, reason) — диагностика, почему initData не принят."""
     if not init_data:
-        return None
+        return False, None, "empty"
     if not BOT_TOKEN:
         # Режим совместимости (токен не настроен): принимаем данные клиента как есть.
-        # Пока владелец не впишет BOT_TOKEN в backend/.env, API работает без подписи.
         try:
             data = _parse_init_data(init_data)
             user = json.loads(data.get("user", "{}"))
-            return user or None
+            return (bool(user), user or None, "no_token_fallback")
         except Exception:
-            return None
+            return False, None, "bad_user"
     try:
         data = _parse_init_data(init_data)
+        if "hash" not in data:
+            return False, None, "no_hash"
         received_hash = data.pop("hash", "")
         check_string = "\n".join(f"{k}={v}" for k, v in sorted(data.items()))
         secret = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
         calc_hash = hmac.new(secret, check_string.encode(), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(calc_hash, received_hash):
-            return None
+            return False, None, "hash_mismatch"
         auth_date = int(data.get("auth_date", 0))
         if time.time() - auth_date > 86400:
-            return None
+            return False, None, "expired"
         user = json.loads(data.get("user", "{}"))
-        return user or None
+        return (bool(user), user or None, "ok")
     except Exception:
-        return None
+        return False, None, "error"
+
+
+def validate_init_data(init_data: str):
+    """dict с пользователем или None, если подпись неверна или протухла."""
+    ok, user, _reason = check_init_data(init_data)
+    return user
 
 
 # ---------------------------------------------------------------- Telegram API (urllib)
@@ -229,9 +236,9 @@ def handle_api(method: str, path: str, body_bytes: bytes):
             body = json.loads(body_bytes or b"{}")
         except Exception:
             body = {}
-        user = validate_init_data(body.get("initData", ""))
-        if not user:
-            return 401, {"ok": False, "error": "invalid initData"}
+        ok, user, reason = check_init_data(body.get("initData", ""))
+        if not ok or not user:
+            return 401, {"ok": False, "error": reason}
         return 200, {"ok": True, "user": user}
 
     if method == "POST" and path == "/api/referral":
@@ -281,9 +288,9 @@ def handle_api(method: str, path: str, body_bytes: bytes):
             body = json.loads(body_bytes or b"{}")
         except Exception:
             body = {}
-        user = validate_init_data(body.get("initData", ""))
-        if not user:
-            return 401, {"ok": False, "error": "invalid initData"}
+        ok, user, reason = check_init_data(body.get("initData", ""))
+        if not ok or not user:
+            return 401, {"ok": False, "error": reason}
         uid = str(user.get("id", ""))
         if not uid:
             return 400, {"ok": False, "error": "bad uid"}
@@ -309,9 +316,9 @@ def handle_api(method: str, path: str, body_bytes: bytes):
             body = json.loads(body_bytes or b"{}")
         except Exception:
             body = {}
-        user = validate_init_data(body.get("initData", ""))
-        if not user:
-            return 401, {"ok": False, "error": "invalid initData"}
+        ok, user, reason = check_init_data(body.get("initData", ""))
+        if not ok or not user:
+            return 401, {"ok": False, "error": reason}
         if not _is_admin(user.get("id")):
             return 403, {"ok": False, "error": "forbidden"}
         players = _load_players()
@@ -322,9 +329,9 @@ def handle_api(method: str, path: str, body_bytes: bytes):
             body = json.loads(body_bytes or b"{}")
         except Exception:
             body = {}
-        user = validate_init_data(body.get("initData", ""))
-        if not user:
-            return 401, {"ok": False, "error": "invalid initData"}
+        ok, user, reason = check_init_data(body.get("initData", ""))
+        if not ok or not user:
+            return 401, {"ok": False, "error": reason}
         if not _is_admin(user.get("id")):
             return 403, {"ok": False, "error": "forbidden"}
         target = str(body.get("id", ""))
@@ -345,9 +352,9 @@ def handle_api(method: str, path: str, body_bytes: bytes):
             body = json.loads(body_bytes or b"{}")
         except Exception:
             body = {}
-        user = validate_init_data(body.get("initData", ""))
-        if not user:
-            return 401, {"ok": False, "error": "invalid initData"}
+        ok, user, reason = check_init_data(body.get("initData", ""))
+        if not ok or not user:
+            return 401, {"ok": False, "error": reason}
         if not (OWNER_ID and str(user.get("id", "")) == str(OWNER_ID)):
             return 403, {"ok": False, "error": "forbidden"}
         target = str(body.get("id", ""))
