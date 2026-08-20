@@ -126,7 +126,7 @@ window.Views = Views;
             </div>`;
           })
           .join("")
-      : `<div class="text-dim" style="font-size:13px;padding:8px 0">${I18N.t("cards.shop.empty")}</div>`;
+      : `<div class="empty-state" style="padding:22px 0">${Icons.get("users")}<div class="empty-sub">${I18N.t("admin.users.empty")}</div></div>`;
 
     return `
       <div class="admin-section">
@@ -659,6 +659,10 @@ window.Views = Views;
       </div>`;
   }
 
+  function statCard(icon, value, label) {
+    return `<div class="admin-stat"><span class="stat-icon">${Icons.get(icon)}</span><b>${value}</b><span>${label}</span></div>`;
+  }
+
   Views.admin = function () {
     const isPage = !!document.getElementById("admin-root");
     const sub = isPage ? document.getElementById("admin-root") : document.getElementById("profile-sub");
@@ -671,10 +675,10 @@ window.Views = Views;
         <h3>${Icons.get("shield")}${I18N.t("admin.title")}</h3>
       </div>`}
       <div class="admin-stats">
-        <div class="admin-stat">${Icons.get("cards")}<b>${s.inventory.length}</b><span>${I18N.t("cards.title")}</span></div>
-        <div class="admin-stat">${Icons.get("users")}<b>${State.users().length}</b><span>${I18N.t("admin.users.list")}</span></div>
-        <div class="admin-stat">${Icons.get("coin")}<b>${UI.fmt(s.balances.coins)}</b><span>${I18N.t("stats.coins")}</span></div>
-        <div class="admin-stat">${Icons.get("robux")}<b>${UI.fmt(s.balances.robux)}</b><span>${I18N.t("stats.robux")}</span></div>
+        ${statCard("cards", s.inventory.length, I18N.t("cards.title"))}
+        ${statCard("users", State.users().length, I18N.t("admin.users.list"))}
+        ${statCard("coin", UI.fmt(s.balances.coins), I18N.t("stats.coins"))}
+        ${statCard("robux", UI.fmt(s.balances.robux), I18N.t("stats.robux"))}
       </div>
       ${tabBar()}
       <div class="admin-body" id="admin-body">${sectionHtml()}</div>`;
@@ -695,6 +699,7 @@ window.Views = Views;
         const body = sub.querySelector("#admin-body");
         body.innerHTML = sectionHtml();
         bindSection(body);
+        b.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
       });
     });
     bindSection(sub);

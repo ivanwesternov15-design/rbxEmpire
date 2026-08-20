@@ -43,8 +43,9 @@
       I18N.setLang(State.get().lang);
       I18N.applyDOM();
       const back = document.getElementById("admin-back");
-      back.innerHTML = Icons.get("arrow") + I18N.t("profile.title");
-      document.querySelector(".admin-heading").innerHTML = Icons.get("shield") + I18N.t("admin.title");
+      back.innerHTML = Icons.get("arrow");
+      document.querySelector(".admin-heading").innerHTML =
+        '<span class="heading-icon">' + Icons.get("shield") + '</span><span>' + I18N.t("admin.title") + "<small>Rbx Game</small></span>";
       back.addEventListener("click", () => {
         if (window.history.length > 1) window.history.back();
         else window.location.href = "index.html";
