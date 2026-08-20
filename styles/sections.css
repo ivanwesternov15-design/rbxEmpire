@@ -782,42 +782,70 @@
 .au-bal-top span { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; }
 .au-bal-top span svg { width: 13px; height: 13px; }
 .au-bal-top b { font-size: 17px; font-variant-numeric: tabular-nums; color: var(--text-main); }
-.au-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-.bal-btn {
-  min-height: 40px;
-  padding: 6px 0;
-  border-radius: 10px;
+.au-set { display: flex; gap: 6px; align-items: center; }
+.au-set-in {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 11px;
+  background: rgba(4, 10, 16, 0.7);
   border: 1px solid var(--glass-border);
-  font-size: 12.5px;
-  font-weight: 800;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+}
+.au-set-in:focus { border-color: var(--acc-cards); box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.18); }
+.au-set-btn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9df2c0;
+  background: rgba(74, 222, 128, 0.13);
+  border: 1px solid rgba(74, 222, 128, 0.32);
   transition: transform 140ms var(--ease-out);
 }
-.bal-btn:active { transform: scale(0.9); }
-.bal-btn.pos { color: #9df2c0; background: rgba(74, 222, 128, 0.13); border-color: rgba(74, 222, 128, 0.32); }
-.bal-btn.neg { color: #ffc9c9; background: rgba(248, 113, 113, 0.13); border-color: rgba(248, 113, 113, 0.32); }
+.au-set-btn svg { width: 20px; height: 20px; }
+.au-set-btn:active { transform: scale(0.9); }
 
 /* --- быстрые действия --- */
-.au-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; position: relative; }
+.au-quick { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 14px; position: relative; }
 .au-quick-btn {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  min-height: 64px;
-  justify-content: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 8px 14px;
   border-radius: 14px;
-  background: rgba(167, 139, 250, 0.09);
+  background: rgba(167, 139, 250, 0.08);
   border: 1px solid rgba(167, 139, 250, 0.25);
   color: var(--text-soft);
-  font-size: 10.5px;
+  font-size: 13.5px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
+  text-align: left;
   transition: transform 140ms var(--ease-out);
 }
-.au-quick-btn svg { width: 20px; height: 20px; color: var(--acc-cards); }
-.au-quick-btn:active { transform: scale(0.94); }
-.au-quick-btn.danger { background: rgba(248, 113, 113, 0.08); border-color: rgba(248, 113, 113, 0.25); }
-.au-quick-btn.danger svg { color: #ff8f8f; }
+.au-quick-btn svg {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 7px;
+  box-sizing: content-box;
+  border-radius: 12px;
+  color: var(--acc-cards);
+  background: rgba(167, 139, 250, 0.14);
+  border: 1px solid rgba(167, 139, 250, 0.28);
+}
+.au-quick-btn:active { transform: scale(0.97); }
+.au-quick-btn.danger { background: rgba(248, 113, 113, 0.07); border-color: rgba(248, 113, 113, 0.25); }
+.au-quick-btn.danger svg { color: #ff8f8f; background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.3); }
 
 /* --- переключатель админки --- */
 .au-switch {

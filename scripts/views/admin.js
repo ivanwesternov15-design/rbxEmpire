@@ -32,16 +32,11 @@ window.Views = Views;
   function rarityOptions(sel) {
     return State.RARITIES.map((r) => `<option value="${r}" ${sel === r ? "selected" : ""}>${I18N.t("r." + r)}</option>`).join("");
   }
-  function balBtns(id, type, isMe) {
-    const p = isMe ? "data-bal" : "data-user-bal";
+  function balSet(id, type, isMe) {
     const idAttr = isMe ? "" : `data-user-id="${id}"`;
-    const items =
-      type === "coins"
-        ? [["-1000", -1000], ["-100", -100], ["+100", 100], ["+1000", 1000]]
-        : [["-100", -100], ["-10", -10], ["+10", 10], ["+100", 100]];
-    return items
-      .map(([l, v]) => `<button class="bal-btn ${v < 0 ? "neg" : "pos"}" ${p}="${v}" data-bal-type="${type}" ${idAttr}>${l}</button>`)
-      .join("");
+    return `
+      <input class="au-set-in" type="number" inputmode="numeric" min="0" placeholder="0" data-bal-type="${type}" ${idAttr}>
+      <button class="au-set-btn" data-bal-save data-bal-type="${type}" ${idAttr}>${Icons.get("check")}</button>`;
   }
 
   /* ================= ПОЛЬЗОВАТЕЛИ ================= */
@@ -73,11 +68,11 @@ window.Views = Views;
         <div class="au-bals">
           <div class="au-bal">
             <div class="au-bal-top"><span>${Icons.get("coin")}${I18N.t("admin.users.coins")}</span><b>${UI.fmt(s.balances.coins)}</b></div>
-            <div class="au-btns">${balBtns(me.id, "coins", true)}</div>
+            <div class="au-set">${balSet(me.id, "coins", true)}</div>
           </div>
           <div class="au-bal">
             <div class="au-bal-top"><span>${Icons.get("robux")}${I18N.t("admin.users.robux")}</span><b>${UI.fmt(s.balances.robux)}</b></div>
-            <div class="au-btns">${balBtns(me.id, "robux", true)}</div>
+            <div class="au-set">${balSet(me.id, "robux", true)}</div>
           </div>
         </div>
         <div class="au-quick">
@@ -110,11 +105,11 @@ window.Views = Views;
               <div class="au-bals">
                 <div class="au-bal">
                   <div class="au-bal-top"><span>${Icons.get("coin")}${I18N.t("admin.users.coins")}</span><b>${UI.fmt(u.coins || 0)}</b></div>
-                  <div class="au-btns">${balBtns(u.id, "coins", false)}</div>
+                  <div class="au-set">${balSet(u.id, "coins", false)}</div>
                 </div>
                 <div class="au-bal">
                   <div class="au-bal-top"><span>${Icons.get("robux")}${I18N.t("admin.users.robux")}</span><b>${UI.fmt(u.robux || 0)}</b></div>
-                  <div class="au-btns">${balBtns(u.id, "robux", false)}</div>
+                  <div class="au-set">${balSet(u.id, "robux", false)}</div>
                 </div>
               </div>
               <div class="au-row-actions">
@@ -141,22 +136,20 @@ window.Views = Views;
   }
 
   function bindUsers(root) {
-    root.querySelectorAll("[data-bal]").forEach((b) => {
+    root.querySelectorAll("[data-bal-save]").forEach((b) => {
       b.addEventListener("click", () => {
         const type = b.getAttribute("data-bal-type");
-        const delta = parseInt(b.getAttribute("data-bal"), 10);
-        State.modifyBalance(type, delta);
-        UI.haptic("light");
-        render();
-      });
-    });
-    root.querySelectorAll("[data-user-bal]").forEach((b) => {
-      b.addEventListener("click", () => {
-        const id = parseInt(b.getAttribute("data-user-id"), 10);
-        const type = b.getAttribute("data-bal-type");
-        const delta = parseInt(b.getAttribute("data-user-bal"), 10);
-        State.setUserBalance(id, type, delta);
-        UI.haptic("light");
+        const idRaw = b.getAttribute("data-user-id");
+        const input = b.parentElement.querySelector(".au-set-in");
+        const v = parseInt((input || {}).value, 10);
+        if (!input || isNaN(v)) {
+          UI.haptic("warning");
+          UI.toast(I18N.t("admin.users.bad"), "info");
+          return;
+        }
+        State.setBalance(idRaw ? parseInt(idRaw, 10) : null, type, v);
+        UI.haptic("success");
+        UI.toast(I18N.t("admin.users.saved"), "check");
         render();
       });
     });

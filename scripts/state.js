@@ -583,6 +583,20 @@ const State = (function () {
     save();
     emit();
   }
+  function setBalance(id, type, value) {
+    if (type !== "coins" && type !== "robux") return;
+    const v = Math.max(0, Math.floor(Number(value) || 0));
+    if (id == null) {
+      data.balances[type] = v;
+    } else {
+      const rec = (data.users || []).find((x) => x.id === id);
+      if (!rec) return;
+      if (type === "coins") rec.coins = v;
+      else rec.robux = v;
+    }
+    save();
+    emit();
+  }
   function removeUser(id) {
     if (id === TG.getUser().id || id === TG.OWNER_ID) return;
     data.users = (data.users || []).filter((x) => x.id !== id);
@@ -654,6 +668,7 @@ const State = (function () {
     resetDaily,
     resetUserProgress,
     setUserBalance,
+    setBalance,
     removeUser,
     users: () => data.users || [],
     admins: () => data.admins || [],
