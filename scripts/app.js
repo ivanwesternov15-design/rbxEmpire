@@ -24,65 +24,28 @@ if (typeof window === "undefined") {
     badge.textContent = n > 9 ? "9+" : String(n);
   }
 
-  /* ---------------- предупреждение о данных Telegram ---------------- */
-  function showTelegramWarn(mode) {
-    const box = document.getElementById("tg-warn");
-    if (!box) return;
-    const icon = document.getElementById("tg-warn-icon");
-    const text = document.getElementById("tg-warn-text");
-    const btn = document.getElementById("tg-warn-btn");
-    box.hidden = false;
-    if (mode === "outside") {
-      icon.innerHTML = Icons.get("send");
-      text.textContent = I18N.t("tg.warn.outside");
-      btn.textContent = I18N.t("tg.warn.open");
-      btn.onclick = () => TG.openTelegramLink("https://t.me/" + I18N.t("tg.botname"));
-    } else {
-      icon.innerHTML = Icons.get("settings");
-      text.textContent = I18N.t("tg.warn.nodata");
-      btn.textContent = I18N.t("tg.warn.refresh");
-      btn.onclick = () => window.location.reload();
-    }
-  }
-
-  function hideTelegramWarn() {
-    const box = document.getElementById("tg-warn");
-    if (box) box.hidden = true;
-  }
-
+  /* ---------------- предупреждение о данных Telegram (без баннера: только тихий ретрай) ---------------- */
   function checkTelegramData() {
-    // плашка показывается только если данные не пришли долго, и скрывается сразу при появлении
     let tries = 0;
-    let shown = false;
-    const tryResolve = () => {
+    const iv = setInterval(() => {
       if (TG.hasUserData() || TG.retryUser()) {
         State.upsertUser(TG.getUser());
-        hideTelegramWarn();
         renderTopbar();
         if (Nav.currentSection() === "profile") Views.render("profile");
-        return true;
-      }
-      return false;
-    };
-    const iv = setInterval(() => {
-      if (tryResolve()) {
         clearInterval(iv);
         return;
       }
       tries += 1;
-      const webAppOk = TG.isTelegram();
-      if (tries >= 12 && !shown) {
-        shown = true;
-        showTelegramWarn(webAppOk ? "nodata" : "outside");
-      } else if (shown && webAppOk) {
-        // плашка «вне Telegram» показана, а WebApp появился позже — убираем её
-        hideTelegramWarn();
-      }
       if (tries > 90) clearInterval(iv); // максимум ~54 сек фоновых проверок
     }, 600);
-    // при возврате в окно мини-аппа — мгновенно перепроверяем и прячем плашку
+    // при возврате в окно мини-аппа — мгновенно перепроверяем
     window.addEventListener("focus", () => {
-      if (tryResolve()) clearInterval(iv);
+      if (TG.hasUserData() || TG.retryUser()) {
+        State.upsertUser(TG.getUser());
+        renderTopbar();
+        if (Nav.currentSection() === "profile") Views.render("profile");
+        clearInterval(iv);
+      }
     });
   }
 
