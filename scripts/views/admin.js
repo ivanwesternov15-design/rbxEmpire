@@ -150,7 +150,7 @@ window.Views = Views;
     const syncNote = Array.isArray(serverPlayers)
       ? `<div class="sync-note ok">${Icons.get("refresh")}${I18N.t("admin.users.synced")}: ${serverPlayers.length}</div>`
       : serverStatus === 401
-      ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.auth")}${serverAuthReason ? " (" + serverAuthReason + ")" : ""} · ${initDataDiag()}</div>`
+      ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.auth")}${serverAuthReason ? " (" + serverAuthReason + ")" : ""}${serverAuthReason === "hash_mismatch" ? " · открой через @rxgame_bot" : ""} · ${initDataDiag()}</div>`
       : serverStatus === 403
       ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.forbidden")}</div>`
       : serverStatus === false
