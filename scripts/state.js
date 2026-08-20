@@ -528,6 +528,8 @@ const State = (function () {
     } else {
       users.push({ id: u.id, name, username: u.username || "", role, coins: 0, robux: 0, lastLogin: Date.now() });
     }
+    save();
+    emit();
   }
   function setAdminRole(id, on) {
     if (!id || id === TG.OWNER_ID) return; // владельцу админку не трогаем
