@@ -6,6 +6,7 @@ Start command для BotHost: `cd backend && python main.py` (файл-обёр�
 """
 import json
 import os
+import re
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -16,8 +17,15 @@ BOT_TOKEN = rbx.env("BOT_TOKEN")
 APP_URL = rbx.env("APP_URL").strip() or ("https://" + rbx.env("DOMAIN").strip().rstrip("/"))
 APP_URL = APP_URL.rstrip("/") + "/"
 
+REF_RE = re.compile(r"^ref_(\d+)$")
+
 WELCOME_TEXT = (
     "Добро пожаловать в Rbx Game! 🎴\n"
+    "Открывай ежедневные карточки, собирай коллекцию, "
+    "стейкай и выполняй задания — получай Robux."
+)
+REF_WELCOME_TEXT = (
+    "Тебя пригласили в Rbx Game! 🎁\n"
     "Открывай ежедневные карточки, собирай коллекцию, "
     "стейкай и выполняй задания — получай Robux."
 )
@@ -47,9 +55,18 @@ def handle_update(upd):
     if not chat_id:
         return
     reply = WELCOME_TEXT
+    web_url = APP_URL
     if text.startswith("/start"):
         payload = text.split(" ", 1)[1] if " " in text else ""
-        if payload and not payload.startswith("ref_"):
+        m = REF_RE.match(payload) if payload else None
+        if m:
+            ref_id = int(m.group(1))
+            if ref_id != chat_id:
+                rbx.save_referral(ref_id, chat_id)
+                reply = REF_WELCOME_TEXT
+            # startapp в URL кнопки — WebApp получит start_param и продублирует запись
+            web_url = APP_URL + "?startapp=ref_" + str(ref_id)
+        elif payload:
             reply = "Скоро будет готово! 🔨\n\n" + reply
     rbx.tg_api(
         "sendMessage",
@@ -58,7 +75,7 @@ def handle_update(upd):
             "text": reply,
             "reply_markup": {
                 "inline_keyboard": [
-                    [{"text": "🎴 Открыть Rbx Game", "web_app": {"url": APP_URL}}]
+                    [{"text": "🎴 Открыть Rbx Game", "web_app": {"url": web_url}}]
                 ]
             },
         },

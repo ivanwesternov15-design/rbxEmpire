@@ -118,6 +118,42 @@ def _save_users(users: dict) -> None:
         json.dump(users, f, ensure_ascii=False, indent=2)
 
 
+def save_referral(referrer_id, friend_id) -> bool:
+    """Запись реферала напрямую с сервера (бот видит payload из /start).
+
+    В личном чате Telegram chat.id совпадает с user.id, поэтому friend_id
+    известен ещё до открытия WebApp — реферал сохраняется сразу при /start.
+    """
+    try:
+        referrer_id = int(referrer_id)
+        friend_id = int(friend_id)
+    except (TypeError, ValueError):
+        return False
+    if not referrer_id or not friend_id or referrer_id == friend_id:
+        return False
+    users = _load_users()
+    record = users.setdefault(str(referrer_id), {"friends": []})
+    fid = str(friend_id)
+    if any(f.get("id") == fid for f in record["friends"]):
+        return True
+    name = "Friend"
+    chat = tg_api("getChat", params={"chat_id": friend_id})
+    if chat and chat.get("ok"):
+        r = chat.get("result", {})
+        name = r.get("first_name") or r.get("username") or "Friend"
+    record["friends"].append(
+        {
+            "id": fid,
+            "name": name,
+            "avatar": "",
+            "joinedAt": int(time.time()),
+            "progress": 0,
+        }
+    )
+    _save_users(users)
+    return True
+
+
 # ---------------------------------------------------------------- API-эндпоинты
 def handle_api(method: str, path: str, body_bytes: bytes):
     """Возвращает (status, dict) для JSON-ответа."""
