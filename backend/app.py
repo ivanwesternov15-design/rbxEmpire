@@ -195,6 +195,15 @@ class UsersDB:
                     rec = dict(urllib.parse.parse_qsl(urllib.parse.unquote_plus(val), keep_blank_values=True))
                 except Exception:
                     rec = {}
+                # urlencode превращает числа в строки — возвращаем типы обратно,
+                # иначе сравнения (lastSeen < now) падают с TypeError
+                for f in ("coins", "robux", "streak", "firstSeen", "lastSeen"):
+                    if f in rec:
+                        try:
+                            rec[f] = int(rec[f])
+                        except (TypeError, ValueError):
+                            rec[f] = 0
+                rec["verified"] = rec.get("verified") == "1"
                 rec["id"] = key
                 users[key] = rec
         return users, admins
@@ -303,7 +312,7 @@ class UsersDB:
                     "verified": False, "source": source,
                 }
                 users[uid] = rec
-            changed = rec.get("lastSeen", 0) < now - 45
+            changed = int(rec.get("lastSeen", 0) or 0) < now - 45
             if name and (verified or not rec.get("verified") or not rec.get("name")):
                 if rec.get("name") != name:
                     rec["name"] = name
@@ -320,7 +329,7 @@ class UsersDB:
                 rec["verified"] = True
                 rec["source"] = source
                 changed = True
-            if rec.get("lastSeen", 0) < now - 20:
+            if int(rec.get("lastSeen", 0) or 0) < now - 20:
                 rec["lastSeen"] = now
                 changed = True
             if changed:
