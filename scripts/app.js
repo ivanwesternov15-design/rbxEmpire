@@ -24,12 +24,24 @@ if (typeof window === "undefined") {
   }
 
   /* ---------------- предупреждение о данных Telegram (без баннера: только тихий ретрай) ---------------- */
+  function registerSeen() {
+    if (!TG.hasUserData()) return;
+    const u = TG.getUser() || {};
+    if (!u.id) return;
+    API.seen({
+      id: u.id,
+      name: ((u.firstName || "") + " " + (u.lastName || "")).trim(),
+      username: u.username || "",
+    }).catch(() => {});
+  }
+
   function checkTelegramData() {
     let tries = 0;
     const iv = setInterval(() => {
       if (TG.hasUserData() || TG.retryUser()) {
         State.upsertUser(TG.getUser());
         State.pingNow();
+        registerSeen();
         renderTopbar();
         if (Nav.currentSection() === "profile") Views.render("profile");
         clearInterval(iv);
@@ -43,6 +55,7 @@ if (typeof window === "undefined") {
       if (TG.hasUserData() || TG.retryUser()) {
         State.upsertUser(TG.getUser());
         State.pingNow();
+        registerSeen();
         renderTopbar();
         if (Nav.currentSection() === "profile") Views.render("profile");
         clearInterval(iv);
@@ -126,6 +139,7 @@ if (typeof window === "undefined") {
     checkTelegramData();
     // немедленная регистрация на сервере (не дожидаясь 10-сек таймера)
     if (TG.hasUserData() && TG.getInitData()) State.pingNow();
+    registerSeen();
   } catch (err) {
     console.error("[rbxflare] boot error:", err);
     hideSplash();

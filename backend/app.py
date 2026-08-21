@@ -12,6 +12,7 @@ import hashlib
 import hmac
 import json
 import os
+import threading
 import time
 import urllib.parse
 import urllib.request
@@ -137,25 +138,173 @@ def _save_users(users: dict) -> None:
         json.dump(users, f, ensure_ascii=False, indent=2)
 
 
-# ---------------------------------------------------------------- игроки и админы
-def _load_json(path: str):
-    if not os.path.exists(path):
-        return {}
+# ---------------------------------------------------------------- игроки: PlayerDB
+MAX_PLAYERS = 20000
+
+
+def _read_json_file(path: str):
+    """dict при успехе, {} если файла нет, None если файл битый."""
     try:
         with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except FileNotFoundError:
         return {}
+    except Exception:
+        return None
+
+
+class PlayerDB:
+    """Хранилище игроков players.json.
+
+    - кэш в памяти + блокировка (HTTP-сервер многопоточный);
+    - атомарная запись: tmp -> os.replace, предыдущая версия остаётся в .bak;
+    - при битом основном файле данные восстанавливаются из .bak.
+    """
+
+    def __init__(self, path: str):
+        self.path = path
+        self.lock = threading.RLock()
+        self._cache = None
+
+    def _load(self) -> dict:
+        if self._cache is None:
+            data = _read_json_file(self.path)
+            if data is None:
+                data = _read_json_file(self.path + ".bak")
+            self._cache = data or {}
+        return self._cache
+
+    def _persist(self) -> None:
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
+        tmp = self.path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(self._cache, f, ensure_ascii=False)
+            f.flush()
+            os.fsync(f.fileno())
+        if os.path.exists(self.path):
+            try:
+                os.replace(self.path, self.path + ".bak")
+            except OSError:
+                pass
+        os.replace(tmp, self.path)
+
+    @staticmethod
+    def _clean(uid, name, username):
+        uid = str(uid).strip()
+        if not uid.isdigit() or int(uid) <= 0 or int(uid) > 10**12:
+            return None, "", ""
+        return uid, str(name or "")[:64], str(username or "").lstrip("@")[:32]
+
+    def upsert_seen(self, uid, name="", username="", source="webapp", verified=False):
+        """Регистрирует посетителя (создаёт запись или обновляет профиль).
+
+        Балансы не трогает. Непроверённые имя/юзернейм не затирают проверенные.
+        Повторные визиты в течение 45 сек не перезаписывают файл.
+        """
+        uid, name, username = self._clean(uid, name, username)
+        if not uid:
+            return None
+        now = int(time.time())
+        with self.lock:
+            players = self._load()
+            rec = players.get(uid)
+            if rec is None:
+                if len(players) >= MAX_PLAYERS:
+                    return None
+                rec = {
+                    "id": uid, "name": "", "username": "",
+                    "coins": 0, "robux": 0, "streak": 0,
+                    "firstSeen": now, "lastSeen": now,
+                    "verified": False, "source": source,
+                }
+                players[uid] = rec
+            changed = rec.get("lastSeen", 0) < now - 45
+            if name and (verified or not rec.get("verified") or not rec.get("name")):
+                if rec.get("name") != name:
+                    rec["name"] = name
+                    changed = True
+            if username and (verified or not rec.get("verified") or not rec.get("username")):
+                if rec.get("username") != username:
+                    rec["username"] = username
+                    changed = True
+            if verified and not rec.get("verified"):
+                rec["verified"] = True
+                rec["source"] = source
+                changed = True
+            if rec.get("lastSeen", 0) < now - 20:
+                rec["lastSeen"] = now
+                changed = True
+            if changed:
+                self._persist()
+            return rec
+
+    def update_player(self, uid, coins=None, robux=None, streak=None, name="", username=""):
+        """Проверенное обновление: профиль + балансы."""
+        uid, name, username = self._clean(uid, name, username)
+        if not uid:
+            return None
+        now = int(time.time())
+        with self.lock:
+            players = self._load()
+            rec = players.setdefault(
+                uid,
+                {
+                    "id": uid, "name": "", "username": "",
+                    "coins": 0, "robux": 0, "streak": 0,
+                    "firstSeen": now, "lastSeen": now,
+                    "verified": False, "source": "webapp",
+                },
+            )
+            if name:
+                rec["name"] = name
+            if username:
+                rec["username"] = username
+            if coins is not None:
+                rec["coins"] = max(0, int(coins))
+            if robux is not None:
+                rec["robux"] = max(0, int(robux))
+            if streak is not None:
+                rec["streak"] = max(0, int(streak))
+            rec["verified"] = True
+            rec["source"] = "webapp"
+            rec["lastSeen"] = now
+            self._persist()
+            return rec
+
+    def remove(self, uid) -> bool:
+        uid = str(uid).strip()
+        with self.lock:
+            players = self._load()
+            if uid in players:
+                del players[uid]
+                self._persist()
+                return True
+        return False
+
+    def all(self) -> list:
+        with self.lock:
+            players = list(self._load().values())
+        players.sort(key=lambda r: r.get("lastSeen", 0), reverse=True)
+        return players
+
+    def count(self) -> int:
+        with self.lock:
+            return len(self._load())
+
+
+PLAYERS_DB = PlayerDB(PLAYERS_FILE)
+
+
+def _load_json(path: str):
+    data = _read_json_file(path)
+    return data if isinstance(data, dict) else {}
 
 
 def _save_json(path: str, obj) -> None:
     os.makedirs(DATA_DIR, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, indent=2)
-
-
-def _load_players() -> dict:
-    return _load_json(PLAYERS_FILE)
 
 
 def _load_admins() -> list:
@@ -172,24 +321,10 @@ def _is_admin(uid) -> bool:
     return str(uid) in _load_admins()
 
 
-def save_player_seen(uid, name="", username=""):
-    """Запись игрока при /start (бот знает chat.id ещё до открытия WebApp)."""
-    try:
-        uid = str(int(uid))
-    except (TypeError, ValueError):
-        return False
-    players = _load_players()
-    rec = players.setdefault(
-        uid,
-        {"id": uid, "name": name, "username": username, "coins": 0, "robux": 0, "streak": 0, "firstSeen": int(time.time())},
-    )
-    if name:
-        rec["name"] = name
-    if username:
-        rec["username"] = username
-    rec["lastSeen"] = int(time.time())
-    _save_json(PLAYERS_FILE, players)
-    return True
+def save_player_seen(uid, name="", username="", source="bot", verified=True):
+    """Совместимость: запись игрока ботом при /start (до открытия WebApp)."""
+    rec = PLAYERS_DB.upsert_seen(uid, name, username, source=source, verified=verified)
+    return rec is not None
 
 
 def save_referral(referrer_id, friend_id) -> bool:
@@ -239,7 +374,26 @@ def handle_api(method: str, path: str, body_bytes: bytes):
         ok, user, reason = check_init_data(body.get("initData", ""))
         if not ok or not user:
             return 401, {"ok": False, "error": reason}
+        PLAYERS_DB.upsert_seen(
+            user.get("id", ""),
+            ((user.get("first_name") or "") + " " + (user.get("last_name") or "")).strip(),
+            user.get("username") or "",
+            source="webapp",
+            verified=True,
+        )
         return 200, {"ok": True, "user": user}
+
+    # Регистрация посетителя БЕЗ авторизации: игрок попадает в список,
+    # даже если initData не прошёл проверку (чужой бот, протухшая сессия).
+    if method == "POST" and path == "/api/player/seen":
+        try:
+            body = json.loads(body_bytes or b"{}")
+        except Exception:
+            body = {}
+        rec = PLAYERS_DB.upsert_seen(body.get("id"), body.get("name"), body.get("username"), source="webapp")
+        if rec is None:
+            return 400, {"ok": False, "error": "bad id"}
+        return 200, {"ok": True, "total": PLAYERS_DB.count()}
 
     if method == "POST" and path == "/api/referral":
         try:
@@ -290,25 +444,33 @@ def handle_api(method: str, path: str, body_bytes: bytes):
             body = {}
         ok, user, reason = check_init_data(body.get("initData", ""))
         if not ok or not user:
+            # даже при непринятой подписи фиксируем визит (без балансов),
+            # чтобы человек всё равно появился в списке админки
+            seen_user = user
+            if seen_user is None and body.get("initData"):
+                try:
+                    seen_user = json.loads(_parse_init_data(body["initData"]).get("user", "{}")) or None
+                except Exception:
+                    seen_user = None
+            if seen_user:
+                PLAYERS_DB.upsert_seen(
+                    seen_user.get("id", ""),
+                    ((seen_user.get("first_name") or "") + " " + (seen_user.get("last_name") or "")).strip(),
+                    seen_user.get("username") or "",
+                    source="webapp",
+                )
             return 401, {"ok": False, "error": reason}
         uid = str(user.get("id", ""))
         if not uid:
             return 400, {"ok": False, "error": "bad uid"}
-        players = _load_players()
-        rec = players.setdefault(
+        PLAYERS_DB.update_player(
             uid,
-            {"id": uid, "name": "", "username": "", "coins": 0, "robux": 0, "streak": 0, "firstSeen": int(time.time())},
+            coins=body.get("coins"),
+            robux=body.get("robux"),
+            streak=body.get("streak"),
+            name=((user.get("first_name") or "") + " " + (user.get("last_name") or "")).strip(),
+            username=user.get("username") or "",
         )
-        rec["name"] = (
-            ((user.get("first_name") or "") + " " + (user.get("last_name") or "")).strip()
-            or rec.get("name", "")
-        )
-        rec["username"] = user.get("username") or rec.get("username", "")
-        rec["coins"] = max(0, int(body.get("coins", rec.get("coins", 0)) or 0))
-        rec["robux"] = max(0, int(body.get("robux", rec.get("robux", 0)) or 0))
-        rec["streak"] = max(0, int(body.get("streak", rec.get("streak", 0)) or 0))
-        rec["lastSeen"] = int(time.time())
-        _save_json(PLAYERS_FILE, players)
         return 200, {"ok": True}
 
     if method == "POST" and path == "/api/players":
@@ -321,8 +483,7 @@ def handle_api(method: str, path: str, body_bytes: bytes):
             return 401, {"ok": False, "error": reason}
         if not _is_admin(user.get("id")):
             return 403, {"ok": False, "error": "forbidden"}
-        players = _load_players()
-        return 200, {"ok": True, "players": list(players.values())}
+        return 200, {"ok": True, "players": PLAYERS_DB.all(), "admins": _load_admins(), "total": PLAYERS_DB.count()}
 
     if method == "POST" and path == "/api/player/remove":
         try:
@@ -339,10 +500,7 @@ def handle_api(method: str, path: str, body_bytes: bytes):
             return 400, {"ok": False, "error": "bad id"}
         if str(user.get("id")) == target:
             return 400, {"ok": False, "error": "cannot remove self"}
-        players = _load_players()
-        if target in players:
-            del players[target]
-            _save_json(PLAYERS_FILE, players)
+        PLAYERS_DB.remove(target)
         admins = [a for a in _load_admins() if a != target]
         _save_admins(admins)
         return 200, {"ok": True, "removed": target}

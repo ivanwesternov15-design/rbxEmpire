@@ -60,10 +60,60 @@ window.Views = Views;
   }
 
   /* ================= ПОЛЬЗОВАТЕЛИ ================= */
+  let serverAdmins = [];
+  let serverTotal = 0;
+
   function roleBadgeBig(id) {
     if (id === TG.OWNER_ID) return `<span class="au-role role-owner">${Icons.get("shield")}${I18N.t("admin.users.role.owner")}</span>`;
-    if (State.isAdminId(id)) return `<span class="au-role role-admin">${Icons.get("shield")}${I18N.t("admin.users.role.admin")}</span>`;
+    if (State.isAdminId(id) || serverAdmins.indexOf(String(id)) >= 0) return `<span class="au-role role-admin">${Icons.get("shield")}${I18N.t("admin.users.role.admin")}</span>`;
     return `<span class="au-role">${I18N.t("admin.users.role.user")}</span>`;
+  }
+
+  function lastSeenTxt(ts) {
+    const d = Date.now() / 1000 - Number(ts || 0);
+    if (d < 600) return I18N.t("admin.users.online");
+    if (d < 3600) return Math.floor(d / 60) + " " + I18N.t("admin.users.ago.m");
+    if (d < 86400) return Math.floor(d / 3600) + " " + I18N.t("admin.users.ago.h");
+    return Math.floor(d / 86400) + " " + I18N.t("admin.users.ago.d");
+  }
+
+  function isOnline(ts) {
+    return Date.now() / 1000 - Number(ts || 0) < 600;
+  }
+
+  /* единый список: сервер — источник истины, локальный кэш дополняет */
+  function unifiedUsers() {
+    const byId = new Map();
+    if (Array.isArray(serverPlayers)) {
+      serverPlayers.forEach((p) => {
+        byId.set(Number(p.id), {
+          id: Number(p.id),
+          name: p.name || "User " + p.id,
+          username: p.username || "",
+          coins: Number(p.coins) || 0,
+          robux: Number(p.robux) || 0,
+          lastSeen: Number(p.lastSeen) || 0,
+        });
+      });
+    }
+    const storeUsers = window.UsersStore ? UsersStore.all() : [];
+    storeUsers.forEach((u) => {
+      const ex = byId.get(u.id);
+      if (!ex) {
+        byId.set(u.id, {
+          id: u.id,
+          name: u.name || "User " + u.id,
+          username: u.username || "",
+          coins: u.coins || 0,
+          robux: u.robux || 0,
+          lastSeen: Math.round((u.lastLogin || Date.now()) / 1000),
+        });
+      } else {
+        if (!ex.username && u.username) ex.username = u.username;
+        if ((!ex.name || ex.name === "User " + ex.id) && u.name && u.name !== "User " + u.id) ex.name = u.name;
+      }
+    });
+    return [...byId.values()].sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
   }
 
   function usersSection() {
@@ -102,28 +152,22 @@ window.Views = Views;
         </div>
       </div>`;
 
-    const storeUsers = window.UsersStore ? UsersStore.all() : [];
-    const merged = storeUsers.slice();
-    if (Array.isArray(serverPlayers)) {
-      serverPlayers.forEach((p) => {
-        if (!merged.some((x) => x.id === parseInt(p.id, 10))) {
-          merged.push({ id: parseInt(p.id, 10), name: p.name || "User " + p.id, username: p.username || "", coins: p.coins || 0, robux: p.robux || 0, lastSeen: p.lastSeen });
-        }
-      });
-    }
-    const list = merged.length
-      ? merged
+    const allUsers = unifiedUsers();
+    const list = allUsers.length
+      ? allUsers
           .map((u) => {
             const isOwnerU = u.id === TG.OWNER_ID;
-            const isAdmin = State.isAdminId(u.id);
+            const isAdmin = State.isAdminId(u.id) || serverAdmins.indexOf(String(u.id)) >= 0;
+            const search = ((u.name || "") + " " + (u.username || "") + " " + u.id).toLowerCase();
+            const online = isOnline(u.lastSeen);
             return `
-            <div class="admin-user">
+            <div class="admin-user" data-search="${esc(search)}">
               <div class="au-head">
                 ${UI.avatarHtml({ firstName: u.name, id: u.id }, 40)}
                 <div class="au-meta">
-                  <div class="au-name">${esc(u.name)}</div>
+                  <div class="au-name">${esc(u.name)}${online ? '<span class="au-online"></span>' : ""}</div>
                   ${roleBadgeBig(u.id)}
-                  <div class="au-id">ID: ${u.id}${u.username ? " · @" + esc(u.username) : ""}</div>
+                  <div class="au-id">ID: ${u.id}${u.username ? " · @" + esc(u.username) : ""} · <span class="au-lastseen">${lastSeenTxt(u.lastSeen)}</span></div>
                 </div>
                 <button class="au-switch ${isAdmin ? "on" : ""}" data-admin-toggle="${u.id}" ${isOwnerU ? "disabled" : ""} title="${isOwnerU ? "" : (isAdmin ? I18N.t("admin.users.admin.off") : I18N.t("admin.users.admin.on"))}">
                   <span class="au-switch-knob"></span>
@@ -145,16 +189,16 @@ window.Views = Views;
             </div>`;
           })
           .join("")
-      : `<div class="empty-state" style="padding:24px 0">${Icons.get("users")}<div class="empty-sub">${I18N.t("admin.users.empty")}</div></div>`;
+      : `<div class="empty-state" style="padding:24px 0">${Icons.get("aUsers")}<div class="empty-sub">${I18N.t("admin.users.empty")}</div></div>`;
 
     const syncNote = Array.isArray(serverPlayers)
-      ? `<div class="sync-note ok">${Icons.get("refresh")}${I18N.t("admin.users.synced")}: ${serverPlayers.length}</div>`
+      ? `<div class="sync-note ok">${Icons.get("cloudOk")}${I18N.t("admin.users.synced")}: ${serverTotal || serverPlayers.length}</div>`
       : serverStatus === 401
-      ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.auth")}${serverAuthReason ? " (" + serverAuthReason + ")" : ""}${serverAuthReason === "hash_mismatch" ? " · открой через @rxgame_bot" : ""} · ${initDataDiag()}</div>`
+      ? `<div class="sync-note">${Icons.get("shieldAlert")}${I18N.t("admin.users.auth")}${serverAuthReason ? " (" + serverAuthReason + ")" : ""}${serverAuthReason === "hash_mismatch" ? " · открой через @rxgame_bot" : ""} · ${initDataDiag()}</div>`
       : serverStatus === 403
-      ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.forbidden")}</div>`
+      ? `<div class="sync-note">${Icons.get("shieldAlert")}${I18N.t("admin.users.forbidden")}</div>`
       : serverStatus === false
-      ? `<div class="sync-note">${Icons.get("refresh")}${I18N.t("admin.users.offline")}</div>`
+      ? `<div class="sync-note">${Icons.get("cloudOff")}${I18N.t("admin.users.offline")}</div>`
       : "";
 
     return `
@@ -163,8 +207,9 @@ window.Views = Views;
         ${meRow}
       </div>
       <div class="admin-section">
-        <h4>${Icons.get("users")}${I18N.t("admin.users.list")} <span class="h4-count">${merged.length}</span></h4>
-        ${list}
+        <h4>${Icons.get("aUsers")}${I18N.t("admin.users.list")} <span class="h4-count">${allUsers.length}</span></h4>
+        ${allUsers.length ? `<div class="au-search">${Icons.get("aSearch")}<input id="user-search" type="text" autocomplete="off" placeholder="${I18N.t("admin.users.search")}"></div>` : ""}
+        <div id="users-list">${list}</div>
         ${syncNote}
         <div class="add-user-row">
           <input type="number" id="user-add-id" placeholder="123456789">
@@ -177,6 +222,16 @@ window.Views = Views;
     clearPoll();
     loadServerPlayers();
     pollTimer = setInterval(loadServerPlayers, 8000);
+    const searchInp = root.querySelector("#user-search");
+    if (searchInp) {
+      searchInp.addEventListener("input", () => {
+        const q = (searchInp.value || "").trim().toLowerCase();
+        root.querySelectorAll("#users-list .admin-user").forEach((el) => {
+          const hay = el.getAttribute("data-search") || "";
+          el.hidden = !!q && hay.indexOf(q) < 0;
+        });
+      });
+    }
     root.querySelectorAll("[data-bal-save]").forEach((b) => {
       b.addEventListener("click", () => {
         const type = b.getAttribute("data-bal-type");
@@ -317,7 +372,7 @@ window.Views = Views;
     const list = s.tasks.map(taskRow).join("");
     return `
       <div class="admin-section">
-        <h4>${Icons.get("tasks")}${I18N.t("admin.tasks")}</h4>
+        <h4>${Icons.get("aTasks")}${I18N.t("admin.tasks")}</h4>
         ${list || `<div class="text-dim" style="font-size:13px;padding:8px 0">${I18N.t("cards.shop.empty")}</div>`}
         <button class="btn btn-gold" id="task-add-btn" style="width:100%;margin-top:8px">${Icons.get("plus")}${I18N.t("admin.tasks.add")}</button>
       </div>`;
@@ -442,7 +497,7 @@ window.Views = Views;
     ).join("");
     return `
       <div class="admin-section">
-        <h4>${Icons.get("sparkles")}${I18N.t("admin.cards.chances")}</h4>
+        <h4>${Icons.get("aCards")}${I18N.t("admin.cards.chances")}</h4>
         <div class="admin-card">
           ${chanceRows}
           <div class="admin-sum ${sum === 100 ? "ok" : ""}" id="chance-sum">${I18N.t("admin.chances.sum")}: <b>${sum}%</b></div>
@@ -534,7 +589,7 @@ window.Views = Views;
       : `<div class="text-dim" style="font-size:13px;padding:8px 0">${I18N.t("cards.shop.empty")}</div>`;
     return `
       <div class="admin-section">
-        <h4>${Icons.get("shop")}${I18N.t("admin.shop")}</h4>
+        <h4>${Icons.get("aShop")}${I18N.t("admin.shop")}</h4>
         ${list}
         <div class="admin-card" style="margin-top:10px">
           <div class="ac-title">${I18N.t("admin.shop.add")}</div>
@@ -596,7 +651,7 @@ window.Views = Views;
     }).join("");
     return `
       <div class="admin-section">
-        <h4>${Icons.get("clock")}${I18N.t("admin.staking")}</h4>
+        <h4>${Icons.get("aStaking")}${I18N.t("admin.staking")}</h4>
         <div class="admin-grid">${cards}</div>
         <button class="btn btn-primary" id="admin-save-staking" style="width:100%;margin-top:8px">${Icons.get("check")}${I18N.t("admin.save")}</button>
       </div>`;
@@ -623,7 +678,7 @@ window.Views = Views;
   function systemSection() {
     return `
       <div class="admin-section">
-        <h4>${Icons.get("settings")}${I18N.t("admin.system.title")}</h4>
+        <h4>${Icons.get("aSystem")}${I18N.t("admin.system.title")}</h4>
         <div class="admin-card" style="display:flex;align-items:center;justify-content:space-between">
           <span class="ai-label">${I18N.t("admin.system.version")}</span>
           <b style="color:var(--text-main)">v1.1.12</b>
@@ -712,7 +767,7 @@ window.Views = Views;
       .join("");
     return `
       <div class="admin-section">
-        <h4>${Icons.get("flame")}${I18N.t("admin.streak.title")}</h4>
+        <h4>${Icons.get("aStreak")}${I18N.t("admin.streak.title")}</h4>
         <div class="admin-card">${rows}</div>
         <button class="btn btn-primary" id="streak-save" style="width:100%;margin-top:8px">${Icons.get("check")}${I18N.t("admin.save")}</button>
       </div>`;
@@ -741,13 +796,13 @@ window.Views = Views;
 
   /* ================= ДАШБОРД: всё по своим местам ================= */
   const CATS = [
-    { id: "users", icon: "users", color: "violet" },
-    { id: "tasks", icon: "tasks", color: "green" },
-    { id: "cards", icon: "cards", color: "gold" },
-    { id: "shop", icon: "shop", color: "amber" },
-    { id: "staking", icon: "clock", color: "blue" },
-    { id: "streak", icon: "flame", color: "orange" },
-    { id: "system", icon: "settings", color: "slate" },
+    { id: "users", icon: "aUsers", color: "violet" },
+    { id: "tasks", icon: "aTasks", color: "green" },
+    { id: "cards", icon: "aCards", color: "gold" },
+    { id: "shop", icon: "aShop", color: "amber" },
+    { id: "staking", icon: "aStaking", color: "blue" },
+    { id: "streak", icon: "aStreak", color: "orange" },
+    { id: "system", icon: "aSystem", color: "slate" },
   ];
   const CAT_COLORS = { violet: "#005AFD", green: "#649AD3", gold: "#2F88E6", amber: "#0068DD", blue: "#2F88E6", slate: "#649AD3", orange: "#106BC4" };
   let screen = "home";
@@ -769,6 +824,8 @@ window.Views = Views;
       .then((res) => {
         if (res && Array.isArray(res.players)) {
           serverPlayers = res.players;
+          serverTotal = Number(res.total) || res.players.length;
+          serverAdmins = Array.isArray(res.admins) ? res.admins.map(String) : [];
           if (window.UsersStore) UsersStore.mergeServer(res.players);
           if (serverStatus !== true) {
             serverStatus = true;
@@ -802,19 +859,29 @@ window.Views = Views;
 
   function catCount(id) {
     const s = State.get();
-    if (id === "users") return window.UsersStore ? UsersStore.count() : State.users().length;
+    if (id === "users") {
+      if (Array.isArray(serverPlayers)) return serverTotal || serverPlayers.length;
+      return window.UsersStore ? UsersStore.count() : State.users().length;
+    }
     if (id === "tasks") return s.tasks.length;
     if (id === "shop") return s.shop.length;
     return null;
   }
 
+  function onlineCount() {
+    if (!Array.isArray(serverPlayers)) return null;
+    return serverPlayers.filter((p) => isOnline(p.lastSeen)).length;
+  }
+
   function statTiles() {
     const s = State.get();
+    const online = onlineCount();
+    const usersCnt = Array.isArray(serverPlayers) ? serverTotal || serverPlayers.length : window.UsersStore ? UsersStore.count() : State.users().length;
     return `
       <div class="admin-stats">
-        ${statCard("cards", s.inventory.length, I18N.t("cards.title"))}
-        ${statCard("users", window.UsersStore ? UsersStore.count() : State.users().length, I18N.t("admin.users.list"))}
-        ${statCard("coin", UI.fmt(s.balances.coins), I18N.t("stats.coins"))}
+        ${statCard("aCards", s.inventory.length, I18N.t("cards.title"))}
+        ${statCard("aDb", usersCnt, I18N.t("admin.users.list"))}
+        ${online != null ? statCard("pulse", online, I18N.t("admin.stats.online")) : statCard("coin", UI.fmt(s.balances.coins), I18N.t("stats.coins"))}
         ${statCard("robux", UI.fmt(s.balances.robux), I18N.t("stats.robux"))}
       </div>`;
   }

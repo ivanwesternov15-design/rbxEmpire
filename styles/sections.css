@@ -722,6 +722,46 @@
 .au-meta { flex: 1; min-width: 0; }
 .au-name { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-weight: 800; font-size: 15px; color: var(--text-main); }
 .au-id { font-size: 12px; color: var(--text-dim); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.au-lastseen { color: var(--text-dim); }
+.au-online {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.8);
+  animation: onlinePulse 2.4s ease-in-out infinite;
+}
+@keyframes onlinePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* --- поиск по пользователям --- */
+.au-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 10px;
+  padding: 0 13px;
+  border-radius: 13px;
+  background: rgba(12, 41, 73, 0.55);
+  border: 1px solid var(--glass-border);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.au-search:focus-within { border-color: rgba(47, 136, 230, 0.55); box-shadow: 0 0 0 3px rgba(47, 136, 230, 0.16); }
+.au-search svg { width: 15px; height: 15px; color: var(--text-dim); flex-shrink: 0; }
+.au-search input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-main);
+  font-size: 13.5px;
+  padding: 11px 0;
+}
+.au-search input::placeholder { color: var(--text-dim); }
 
 /* --- hero-карточка текущего пользователя --- */
 .au-hero {

@@ -60,6 +60,10 @@ const API = (function () {
     pingPlayer(payload) {
       return post("/api/player/ping", Object.assign({ initData: window.TG ? TG.getInitData() : "" }, payload || {}));
     },
+    /* регистрация посетителя без авторизации — работает даже при 401 */
+    seen(payload) {
+      return post("/api/player/seen", Object.assign({ initData: window.TG ? TG.getInitData() : "" }, payload || {}));
+    },
     players() {
       return post("/api/players", { initData: window.TG ? TG.getInitData() : "" });
     },

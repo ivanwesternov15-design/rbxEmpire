@@ -46,6 +46,20 @@ const Icons = (function () {
     wallet: `<svg ${S}><rect x="3" y="6" width="18" height="14" rx="2.5"/><path d="M3 9.5h18"/><path d="M16.5 14.5h.01"/></svg>`,
     gamepad: `<svg ${S}><rect x="2.5" y="7" width="19" height="10" rx="5"/><path d="M7 10.5v4"/><path d="M5 12.5h4"/><circle cx="16" cy="10.5" r="0.8"/><circle cx="18.5" cy="13.5" r="0.8"/></svg>`,
     grid: `<svg ${S}><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>`,
+    /* --- админка: собственный набор --- */
+    aUsers: `<svg ${S}><rect x="2.5" y="5" width="19" height="14.5" rx="2.5"/><circle cx="8.5" cy="10.5" r="2.1"/><path d="M5 15.7c.7-1.5 2-2.3 3.5-2.3s2.8.8 3.5 2.3"/><path d="M14.8 9.5h4"/><path d="M14.8 12.5h4"/><path d="M14.8 15.5h2.4"/></svg>`,
+    aTasks: `<svg ${S}><rect x="8" y="2.5" width="8" height="3.6" rx="1.2"/><path d="M16 4.3h2a2 2 0 0 1 2 2v13.2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6.3a2 2 0 0 1 2-2h2"/><path d="m9 14.2 2.1 2.1 4-4.3"/></svg>`,
+    aCards: `<svg ${S}><rect x="9" y="3.5" width="11.5" height="11.5" rx="2.4"/><rect x="3.5" y="9" width="11.5" height="11.5" rx="2.4"/></svg>`,
+    aShop: `<svg ${S}><path d="M4.5 9.6 5.6 4.5h12.8l1.1 5.1"/><path d="M4.5 9.5c0 1.4 1.1 2.5 2.5 2.5s2.4-1 2.5-2.3c.1 1.3 1.2 2.3 2.5 2.3s2.4-1 2.5-2.3c.1 1.3 1.2 2.3 2.5 2.3s2.5-1.1 2.5-2.5"/><path d="M5.5 12.8v6.7h13v-6.7"/><path d="M9.5 19.5v-4.6h5v4.6"/></svg>`,
+    aStaking: `<svg ${S}><path d="m2.5 17.5 6-6.5 5 5 7-8"/><path d="M15.5 7.5h5v5"/></svg>`,
+    aStreak: `<svg ${S}><path d="M12 21.5c3.9 0 6.5-2.5 6.5-6.2 0-2.9-1.7-4.9-3.3-6.8-.8-1-1.6-2-2.1-3.3-1 .8-1.7 1.9-2 3.2-1.2-.5-2.1-1.5-2.5-2.9C6.6 7.7 5.5 10.4 5.5 13.3c0 4.7 2.6 8.2 6.5 8.2z"/><path d="M12 21.5c-1.6 0-2.7-1-2.7-2.6 0-1.7 1.5-2.7 2.7-4.4 1.2 1.7 2.7 2.7 2.7 4.4 0 1.6-1.1 2.6-2.7 2.6z"/></svg>`,
+    aSystem: `<svg ${S}><path d="M3.5 7.5h7"/><circle cx="14" cy="7.5" r="2.6"/><path d="M16.6 7.5h3.9"/><path d="M3.5 16.5h3.9"/><circle cx="10" cy="16.5" r="2.6"/><path d="M12.6 16.5h7.9"/></svg>`,
+    aSearch: `<svg ${S}><circle cx="11" cy="11" r="6.5"/><path d="m20.5 20.5-4.9-4.9"/></svg>`,
+    aDb: `<svg ${S}><ellipse cx="12" cy="5.5" rx="7.5" ry="3"/><path d="M4.5 5.5v13c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3v-13"/><path d="M4.5 12c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3"/></svg>`,
+    pulse: `<svg ${S}><path d="M3 12h3.5l2.5-6.5 5 13 2.5-6.5H21"/></svg>`,
+    cloudOk: `<svg ${S}><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/><path d="m9.5 13 2 2 3.5-3.5"/></svg>`,
+    cloudOff: `<svg ${S}><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/><path d="m4.5 4.5 15 15"/></svg>`,
+    shieldAlert: `<svg ${S}><path d="M12 2.5 4.5 5.5v6c0 4.5 3.2 7.8 7.5 9.5 4.3-1.7 7.5-5 7.5-9.5v-6L12 2.5z"/><path d="M12 8.5v4"/><path d="M12 15.5v.1"/></svg>`,
   };
   return {
     get(name) {
