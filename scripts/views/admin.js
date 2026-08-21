@@ -81,7 +81,7 @@ window.Views = Views;
     return Date.now() / 1000 - Number(ts || 0) < 600;
   }
 
-  /* единый список: сервер — источник истины, локальный кэш дополняет */
+  /* единый список: ТОЛЬКО сервер (users.env) — локального кэша нет */
   function unifiedUsers() {
     const byId = new Map();
     if (Array.isArray(serverPlayers)) {
@@ -97,23 +97,6 @@ window.Views = Views;
         });
       });
     }
-    const storeUsers = window.UsersStore ? UsersStore.all() : [];
-    storeUsers.forEach((u) => {
-      const ex = byId.get(u.id);
-      if (!ex) {
-        byId.set(u.id, {
-          id: u.id,
-          name: u.name || "User " + u.id,
-          username: u.username || "",
-          coins: u.coins || 0,
-          robux: u.robux || 0,
-          lastSeen: Math.round((u.lastLogin || Date.now()) / 1000),
-        });
-      } else {
-        if (!ex.username && u.username) ex.username = u.username;
-        if ((!ex.name || ex.name === "User " + ex.id) && u.name && u.name !== "User " + u.id) ex.name = u.name;
-      }
-    });
     return [...byId.values()].sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
   }
 
@@ -827,7 +810,6 @@ window.Views = Views;
           serverPlayers = res.players;
           serverTotal = Number(res.total) || res.players.length;
           serverAdmins = Array.isArray(res.admins) ? res.admins.map(String) : [];
-          if (window.UsersStore) UsersStore.mergeServer(res.players);
           if (serverStatus !== true) {
             serverStatus = true;
             if (screen === "users") render();
@@ -862,7 +844,7 @@ window.Views = Views;
     const s = State.get();
     if (id === "users") {
       if (Array.isArray(serverPlayers)) return serverTotal || serverPlayers.length;
-      return window.UsersStore ? UsersStore.count() : State.users().length;
+      return 0;
     }
     if (id === "tasks") return s.tasks.length;
     if (id === "shop") return s.shop.length;
@@ -877,7 +859,7 @@ window.Views = Views;
   function statTiles() {
     const s = State.get();
     const online = onlineCount();
-    const usersCnt = Array.isArray(serverPlayers) ? serverTotal || serverPlayers.length : window.UsersStore ? UsersStore.count() : State.users().length;
+    const usersCnt = Array.isArray(serverPlayers) ? (serverTotal || serverPlayers.length) : 0;
     return `
       <div class="admin-stats">
         ${statCard("aCards", s.inventory.length, I18N.t("cards.title"))}
@@ -980,5 +962,6 @@ window.Views = Views;
   Views.admin = function () {
     screen = "home";
     render();
+    loadServerPlayers();
   };
 })();

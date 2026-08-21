@@ -55,6 +55,7 @@ const TG = (function () {
 
     const raw = webApp ? webApp.initDataUnsafe : null;
     const u = (raw && raw.user) || parseInitData(webApp ? webApp.initData : "");
+    captureInitData();
     const startParam = (raw && raw.start_param) || "";
 
     if (u && u.id) {
@@ -86,11 +87,12 @@ const TG = (function () {
   /* некоторые клиенты Telegram заполняют данные чуть позже — пробуем дозагрузить */
   function retryUser() {
     const webApp = getWebApp();
-    if (!webApp || !user || (user.id && user.id !== 0)) return;
+    if (!webApp || !user || (user.id && user.id !== 0)) return false;
     const raw = webApp.initDataUnsafe || null;
     const u = (raw && raw.user) || parseInitData(webApp.initData || "");
     if (u && u.id) {
       user = buildUser(u);
+      captureInitData();
       return true;
     }
     return false;
@@ -184,9 +186,20 @@ const TG = (function () {
     window.open(url, "_blank");
   }
 
+  /* initData кэшируется при первой доступности и переиспользуется,
+     чтобы сервер не получал пустую строку при редких "пропадающих" вызовах */
+  let cachedInitData = "";
+
   function getInitData() {
     const webApp = getWebApp();
-    return webApp ? webApp.initData : "";
+    return cachedInitData || (webApp ? webApp.initData : "") || "";
+  }
+
+  function captureInitData() {
+    const webApp = getWebApp();
+    const raw = webApp ? webApp.initData : "";
+    if (raw) cachedInitData = raw;
+    return cachedInitData;
   }
 
   function setBgColor(color) {
