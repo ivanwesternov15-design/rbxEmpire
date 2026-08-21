@@ -1231,3 +1231,14 @@
 #sec-profile .lang-pill.active { background: linear-gradient(135deg, rgba(0, 90, 253, 0.25), rgba(0, 51, 145, 0.3)); border-color: rgba(47, 136, 230, 0.45); color: #BFD9FF; }
 
 .setting-row { background: var(--glass-bg-soft); border-color: rgba(47, 136, 230, 0.14); }
+
+/* ---------------- морфинг-иконки (morphicons) ---------------- */
+.mi { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; flex: none; color: inherit; }
+.mi-path { stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; fill: none;
+  stroke-dasharray: 120; stroke-dashoffset: 0;
+  animation: miDraw 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes miDraw { from { stroke-dashoffset: 120; } to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .mi-path { animation: none; } }
+
+/* аватарки с фото */
+.avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }

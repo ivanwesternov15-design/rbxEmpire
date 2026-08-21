@@ -124,7 +124,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("Connection", "close")
         self.end_headers()
+        self.close_connection = True
         self.wfile.write(body)
 
     def _file(self, status, body, ctype):
@@ -132,13 +134,17 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-cache")
+        self.send_header("Connection", "close")
         self.end_headers()
+        self.close_connection = True
         self.wfile.write(body)
 
     def do_GET(self):
-        path = self.path.split("?", 1)[0]
+        raw = self.path
+        path = raw.split("?", 1)[0]
+        query = raw.split("?", 1)[1] if "?" in raw else ""
         if path.startswith("/api/"):
-            status, payload = rbx.handle_api("GET", path, b"")
+            status, payload = rbx.handle_api("GET", path, b"", query)
             self._json(status, payload)
             return
         status, body, ctype = rbx.serve_static(path)
@@ -148,10 +154,12 @@ class Handler(BaseHTTPRequestHandler):
         self._file(status, body, ctype)
 
     def do_POST(self):
-        path = self.path.split("?", 1)[0]
+        raw = self.path
+        path = raw.split("?", 1)[0]
+        query = raw.split("?", 1)[1] if "?" in raw else ""
         length = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(length) if length else b""
-        status, payload = rbx.handle_api("POST", path, body)
+        status, payload = rbx.handle_api("POST", path, body, query)
         self._json(status, payload)
 
 

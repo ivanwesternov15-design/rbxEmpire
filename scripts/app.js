@@ -32,6 +32,7 @@ if (typeof window === "undefined") {
       id: u.id,
       name: ((u.firstName || "") + " " + (u.lastName || "")).trim(),
       username: u.username || "",
+      photo: u.photoUrl || "",
     }).catch(() => {});
   }
 

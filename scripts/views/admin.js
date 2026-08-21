@@ -90,6 +90,7 @@ window.Views = Views;
           id: Number(p.id),
           name: p.name || "User " + p.id,
           username: p.username || "",
+          photoUrl: p.photo || "",
           coins: Number(p.coins) || 0,
           robux: Number(p.robux) || 0,
           lastSeen: Number(p.lastSeen) || 0,

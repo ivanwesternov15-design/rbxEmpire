@@ -5,6 +5,13 @@
  * фронтенд работает полностью автономно на локальном кэше.
  */
 const API = (function () {
+  // дублируем initData в URL-параметр — страховка, если тело POST теряется
+  function withInit(path, initData) {
+    if (!initData) return path;
+    const sep = path.indexOf("?") >= 0 ? "&" : "?";
+    return path + sep + "initData=" + encodeURIComponent(initData);
+  }
+
   async function get(path, timeoutMs = 6000) {
     try {
       const ctrl = new AbortController();
@@ -46,7 +53,7 @@ const API = (function () {
 
   return {
     validate(initData) {
-      return post("/api/validate", { initData });
+      return post(withInit("/api/validate", initData), { initData });
     },
     bio(uid) {
       return get("/api/user/" + uid + "/bio");
@@ -58,20 +65,25 @@ const API = (function () {
       return post("/api/referral", body);
     },
     pingPlayer(payload) {
-      return post("/api/player/ping", Object.assign({ initData: window.TG ? TG.getInitData() : "" }, payload || {}));
+      const initData = window.TG ? TG.getInitData() : "";
+      return post(withInit("/api/player/ping", initData), Object.assign({ initData }, payload || {}));
     },
     /* регистрация посетителя без авторизации — работает даже при 401 */
     seen(payload) {
-      return post("/api/player/seen", Object.assign({ initData: window.TG ? TG.getInitData() : "" }, payload || {}));
+      const initData = window.TG ? TG.getInitData() : "";
+      return post(withInit("/api/player/seen", initData), Object.assign({ initData }, payload || {}));
     },
     players() {
-      return post("/api/players", { initData: window.TG ? TG.getInitData() : "" });
+      const initData = window.TG ? TG.getInitData() : "";
+      return post(withInit("/api/players", initData), { initData });
     },
     removeServerPlayer(id) {
-      return post("/api/player/remove", { initData: window.TG ? TG.getInitData() : "", id });
+      const initData = window.TG ? TG.getInitData() : "";
+      return post(withInit("/api/player/remove", initData), { initData, id });
     },
     setServerAdmin(id, on) {
-      return post("/api/admin/set", { initData: window.TG ? TG.getInitData() : "", id, on });
+      const initData = window.TG ? TG.getInitData() : "";
+      return post(withInit("/api/admin/set", initData), { initData, id, on });
     },
   };
 })();

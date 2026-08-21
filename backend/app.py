@@ -21,7 +21,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONT_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
 DATA_DIR = os.getenv("DATA_DIR", os.path.join(BASE_DIR, "data"))
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
-PLAYERS_FILE = os.path.join(DATA_DIR, "players.json")
+USERS_ENV_FILE = os.path.join(DATA_DIR, "users.env")
 ADMINS_FILE = os.path.join(DATA_DIR, "admins.json")
 
 
@@ -154,32 +154,121 @@ def _read_json_file(path: str):
         return None
 
 
-class PlayerDB:
-    """Хранилище игроков players.json.
+# ---------------------------------------------------------------- UsersDB (users.env)
+class UsersDB:
+    """Хранилище пользователей в файле users.env.
+
+    Формат — таблица KEY=VALUE в стиле .env, но безопасно отделён от
+    backend/.env (где лежит BOT_TOKEN). Каждая запись — одна строка:
+
+        <telegram_id> = urlencoded(k=v&k=v&...)
+
+    Админы хранятся как отдельные строки admin:<id> = 1.
 
     - кэш в памяти + блокировка (HTTP-сервер многопоточный);
-    - атомарная запись: tmp -> os.replace, предыдущая версия остаётся в .bak;
-    - при битом основном файле данные восстанавливаются из .bak.
+    - атомарная запись: tmp -> os.replace, предыдущая версия в .bak;
+    - миграция из старых players.json/admins.json при первом запуске.
     """
 
     def __init__(self, path: str):
         self.path = path
         self.lock = threading.RLock()
-        self._cache = None
+        self._users = None
+        self._admins = None
 
-    def _load(self) -> dict:
-        if self._cache is None:
-            data = _read_json_file(self.path)
-            if data is None:
-                data = _read_json_file(self.path + ".bak")
-            self._cache = data or {}
-        return self._cache
+    # ----- парсинг / сериализация -----
+    def _parse(self, text: str):
+        users, admins = {}, []
+        for line in text.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" not in line:
+                continue
+            key, _, val = line.partition("=")
+            key = key.strip()
+            val = val.strip()
+            if key.startswith("admin:"):
+                admins.append(key.split(":", 1)[1])
+            else:
+                try:
+                    rec = dict(urllib.parse.parse_qsl(urllib.parse.unquote_plus(val), keep_blank_values=True))
+                except Exception:
+                    rec = {}
+                rec["id"] = key
+                users[key] = rec
+        return users, admins
+
+    def _render(self, users: dict, admins: list) -> str:
+        out = []
+        out.append("# rbxflare users table — managed automatically, do not edit while bot runs")
+        out.append("# <telegram_id> = urlencoded(k=v&k=v&...)  |  admin:<id> = 1")
+        for uid in sorted(users.keys(), key=lambda x: int(x) if x.isdigit() else 0):
+            rec = users[uid]
+            fields = {
+                "name": rec.get("name", ""),
+                "username": rec.get("username", ""),
+                "photo": rec.get("photo", ""),
+                "coins": int(rec.get("coins", 0) or 0),
+                "robux": int(rec.get("robux", 0) or 0),
+                "streak": int(rec.get("streak", 0) or 0),
+                "firstSeen": int(rec.get("firstSeen", 0) or 0),
+                "lastSeen": int(rec.get("lastSeen", 0) or 0),
+                "verified": "1" if rec.get("verified") else "0",
+                "source": rec.get("source", "webapp"),
+            }
+            q = urllib.parse.urlencode(fields)
+            out.append(f"{uid} = {q}")
+        for a in admins:
+            out.append(f"admin:{a} = 1")
+        out.append("")
+        return "\n".join(out)
+
+    def _migrate_once(self) -> None:
+        # импорт из старых форматов при самом первом запуске
+        users, admins = {}, []
+        old_players = _read_json_file(os.path.join(os.path.dirname(self.path), "players.json"))
+        for uid, rec in (old_players or {}).items():
+            users[uid] = {
+                "name": rec.get("name", ""),
+                "username": rec.get("username", ""),
+                "photo": rec.get("photo", ""),
+                "coins": rec.get("coins", 0),
+                "robux": rec.get("robux", 0),
+                "streak": rec.get("streak", 0),
+                "firstSeen": rec.get("firstSeen", 0),
+                "lastSeen": rec.get("lastSeen", 0),
+                "verified": rec.get("verified", False),
+                "source": rec.get("source", "webapp"),
+            }
+        old_admins = _read_json_file(os.path.join(os.path.dirname(self.path), "admins.json"))
+        for a in (old_admins or {}).get("ids", []):
+            if str(a) not in admins:
+                admins.append(str(a))
+        self._users, self._admins = users, admins
+        self._persist()
+
+    def _load(self):
+        if self._users is None:
+            if os.path.exists(self.path):
+                with open(self.path, "r", encoding="utf-8") as f:
+                    self._users, self._admins = self._parse(f.read())
+            elif os.path.exists(self.path + ".bak"):
+                try:
+                    with open(self.path + ".bak", "r", encoding="utf-8") as f:
+                        self._users, self._admins = self._parse(f.read())
+                except Exception:
+                    self._migrate_once()
+            else:
+                self._migrate_once()
+        return self._users, self._admins
 
     def _persist(self) -> None:
+        users, admins = self._users or {}, self._admins or []
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         tmp = self.path + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(self._cache, f, ensure_ascii=False)
+            f.write(self._render(users, admins))
             f.flush()
             os.fsync(f.fileno())
         if os.path.exists(self.path):
@@ -196,29 +285,24 @@ class PlayerDB:
             return None, "", ""
         return uid, str(name or "")[:64], str(username or "").lstrip("@")[:32]
 
-    def upsert_seen(self, uid, name="", username="", source="webapp", verified=False):
-        """Регистрирует посетителя (создаёт запись или обновляет профиль).
-
-        Балансы не трогает. Непроверённые имя/юзернейм не затирают проверенные.
-        Повторные визиты в течение 45 сек не перезаписывают файл.
-        """
+    def upsert_seen(self, uid, name="", username="", photo="", source="webapp", verified=False):
         uid, name, username = self._clean(uid, name, username)
         if not uid:
             return None
         now = int(time.time())
         with self.lock:
-            players = self._load()
-            rec = players.get(uid)
+            users, admins = self._load()
+            rec = users.get(uid)
             if rec is None:
-                if len(players) >= MAX_PLAYERS:
+                if len(users) >= MAX_PLAYERS:
                     return None
                 rec = {
-                    "id": uid, "name": "", "username": "",
+                    "id": uid, "name": "", "username": "", "photo": "",
                     "coins": 0, "robux": 0, "streak": 0,
                     "firstSeen": now, "lastSeen": now,
                     "verified": False, "source": source,
                 }
-                players[uid] = rec
+                users[uid] = rec
             changed = rec.get("lastSeen", 0) < now - 45
             if name and (verified or not rec.get("verified") or not rec.get("name")):
                 if rec.get("name") != name:
@@ -227,6 +311,10 @@ class PlayerDB:
             if username and (verified or not rec.get("verified") or not rec.get("username")):
                 if rec.get("username") != username:
                     rec["username"] = username
+                    changed = True
+            if photo and (verified or not rec.get("photo")):
+                if rec.get("photo") != photo:
+                    rec["photo"] = photo
                     changed = True
             if verified and not rec.get("verified"):
                 rec["verified"] = True
@@ -239,27 +327,28 @@ class PlayerDB:
                 self._persist()
             return rec
 
-    def update_player(self, uid, coins=None, robux=None, streak=None, name="", username=""):
-        """Проверенное обновление: профиль + балансы."""
+    def update_player(self, uid, coins=None, robux=None, streak=None, name="", username="", photo=""):
         uid, name, username = self._clean(uid, name, username)
         if not uid:
             return None
         now = int(time.time())
         with self.lock:
-            players = self._load()
-            rec = players.setdefault(
-                uid,
-                {
-                    "id": uid, "name": "", "username": "",
+            users, admins = self._load()
+            rec = users.get(uid)
+            if rec is None:
+                rec = {
+                    "id": uid, "name": "", "username": "", "photo": "",
                     "coins": 0, "robux": 0, "streak": 0,
                     "firstSeen": now, "lastSeen": now,
                     "verified": False, "source": "webapp",
-                },
-            )
+                }
+                users[uid] = rec
             if name:
                 rec["name"] = name
             if username:
                 rec["username"] = username
+            if photo:
+                rec["photo"] = photo
             if coins is not None:
                 rec["coins"] = max(0, int(coins))
             if robux is not None:
@@ -275,25 +364,53 @@ class PlayerDB:
     def remove(self, uid) -> bool:
         uid = str(uid).strip()
         with self.lock:
-            players = self._load()
-            if uid in players:
-                del players[uid]
+            users, admins = self._load()
+            changed = False
+            if uid in users:
+                del users[uid]
+                changed = True
+            if uid in admins:
+                admins.remove(uid)
+                changed = True
+            if changed:
                 self._persist()
-                return True
-        return False
+            return changed
 
     def all(self) -> list:
         with self.lock:
-            players = list(self._load().values())
-        players.sort(key=lambda r: r.get("lastSeen", 0), reverse=True)
-        return players
+            users, admins = self._load()
+            recs = [dict(r) for r in users.values()]
+        for r in recs:
+            r["coins"] = int(r.get("coins", 0) or 0)
+            r["robux"] = int(r.get("robux", 0) or 0)
+            r["streak"] = int(r.get("streak", 0) or 0)
+            r["verified"] = bool(r.get("verified"))
+        recs.sort(key=lambda r: int(r.get("lastSeen", 0) or 0), reverse=True)
+        return recs
 
     def count(self) -> int:
         with self.lock:
-            return len(self._load())
+            users, _ = self._load()
+            return len(users)
+
+    def admins(self) -> list:
+        with self.lock:
+            _, admins = self._load()
+            return list(admins)
+
+    def set_admin(self, uid, on: bool) -> None:
+        uid = str(uid).strip()
+        with self.lock:
+            users, admins = self._load()
+            if on and uid not in admins:
+                admins.append(uid)
+                self._persist()
+            elif not on and uid in admins:
+                admins.remove(uid)
+                self._persist()
 
 
-PLAYERS_DB = PlayerDB(PLAYERS_FILE)
+USERS_DB = UsersDB(USERS_ENV_FILE)
 
 
 def _load_json(path: str):
@@ -318,12 +435,12 @@ def _save_admins(ids: list) -> None:
 def _is_admin(uid) -> bool:
     if OWNER_ID and str(uid) == str(OWNER_ID):
         return True
-    return str(uid) in _load_admins()
+    return str(uid) in USERS_DB.admins()
 
 
-def save_player_seen(uid, name="", username="", source="bot", verified=True):
+def save_player_seen(uid, name="", username="", photo="", source="bot", verified=True):
     """Совместимость: запись игрока ботом при /start (до открытия WebApp)."""
-    rec = PLAYERS_DB.upsert_seen(uid, name, username, source=source, verified=verified)
+    rec = USERS_DB.upsert_seen(uid, name, username, photo=photo, source=source, verified=verified)
     return rec is not None
 
 
@@ -364,20 +481,37 @@ def save_referral(referrer_id, friend_id) -> bool:
 
 
 # ---------------------------------------------------------------- API-эндпоинты
-def handle_api(method: str, path: str, body_bytes: bytes):
+def _user_name(u):
+    return ((u.get("first_name") or "") + " " + (u.get("last_name") or "")).strip()
+
+
+def _resolve_init_data(body, query):
+    """Возвращает initData из тела или (фолбэк) из URL-параметра."""
+    raw = body.get("initData", "") or ""
+    if not raw and query:
+        qs = urllib.parse.parse_qs(query)
+        raw = (qs.get("initData") or [""])[0]
+    if isinstance(raw, bytes):
+        raw = raw.decode("utf-8", "ignore")
+    return raw or ""
+
+
+def handle_api(method: str, path: str, body_bytes: bytes, query: str = ""):
     """Возвращает (status, dict) для JSON-ответа."""
     if method == "POST" and path == "/api/validate":
         try:
             body = json.loads(body_bytes or b"{}")
         except Exception:
             body = {}
-        ok, user, reason = check_init_data(body.get("initData", ""))
+        init = _resolve_init_data(body, query)
+        ok, user, reason = check_init_data(init)
         if not ok or not user:
             return 401, {"ok": False, "error": reason}
-        PLAYERS_DB.upsert_seen(
+        USERS_DB.upsert_seen(
             user.get("id", ""),
-            ((user.get("first_name") or "") + " " + (user.get("last_name") or "")).strip(),
+            _user_name(user),
             user.get("username") or "",
+            photo=user.get("photo_url") or "",
             source="webapp",
             verified=True,
         )
@@ -390,10 +524,22 @@ def handle_api(method: str, path: str, body_bytes: bytes):
             body = json.loads(body_bytes or b"{}")
         except Exception:
             body = {}
-        rec = PLAYERS_DB.upsert_seen(body.get("id"), body.get("name"), body.get("username"), source="webapp")
+        uid = body.get("id")
+        if not uid and query:
+            try:
+                quser = json.loads(_parse_init_data(_resolve_init_data(body, query)).get("user", "{}")) or {}
+                uid = quser.get("id")
+                body.setdefault("name", _user_name(quser))
+                body.setdefault("username", quser.get("username") or "")
+                body.setdefault("photo", quser.get("photo_url") or "")
+            except Exception:
+                pass
+        rec = USERS_DB.upsert_seen(
+            uid, body.get("name"), body.get("username"), photo=body.get("photo", ""), source="webapp"
+        )
         if rec is None:
             return 400, {"ok": False, "error": "bad id"}
-        return 200, {"ok": True, "total": PLAYERS_DB.count()}
+        return 200, {"ok": True, "total": USERS_DB.count()}
 
     if method == "POST" and path == "/api/referral":
         try:
@@ -442,34 +588,37 @@ def handle_api(method: str, path: str, body_bytes: bytes):
             body = json.loads(body_bytes or b"{}")
         except Exception:
             body = {}
-        ok, user, reason = check_init_data(body.get("initData", ""))
+        init = _resolve_init_data(body, query)
+        ok, user, reason = check_init_data(init)
         if not ok or not user:
             # даже при непринятой подписи фиксируем визит (без балансов),
             # чтобы человек всё равно появился в списке админки
             seen_user = user
-            if seen_user is None and body.get("initData"):
+            if seen_user is None and init:
                 try:
-                    seen_user = json.loads(_parse_init_data(body["initData"]).get("user", "{}")) or None
+                    seen_user = json.loads(_parse_init_data(init).get("user", "{}")) or None
                 except Exception:
                     seen_user = None
             if seen_user:
-                PLAYERS_DB.upsert_seen(
+                USERS_DB.upsert_seen(
                     seen_user.get("id", ""),
-                    ((seen_user.get("first_name") or "") + " " + (seen_user.get("last_name") or "")).strip(),
+                    _user_name(seen_user),
                     seen_user.get("username") or "",
+                    photo=seen_user.get("photo_url") or "",
                     source="webapp",
                 )
             return 401, {"ok": False, "error": reason}
         uid = str(user.get("id", ""))
         if not uid:
             return 400, {"ok": False, "error": "bad uid"}
-        PLAYERS_DB.update_player(
+        USERS_DB.update_player(
             uid,
             coins=body.get("coins"),
             robux=body.get("robux"),
             streak=body.get("streak"),
-            name=((user.get("first_name") or "") + " " + (user.get("last_name") or "")).strip(),
+            name=_user_name(user),
             username=user.get("username") or "",
+            photo=user.get("photo_url") or "",
         )
         return 200, {"ok": True}
 
@@ -478,19 +627,26 @@ def handle_api(method: str, path: str, body_bytes: bytes):
             body = json.loads(body_bytes or b"{}")
         except Exception:
             body = {}
-        ok, user, reason = check_init_data(body.get("initData", ""))
+        init = _resolve_init_data(body, query)
+        ok, user, reason = check_init_data(init)
         if not ok or not user:
             return 401, {"ok": False, "error": reason}
         if not _is_admin(user.get("id")):
             return 403, {"ok": False, "error": "forbidden"}
-        return 200, {"ok": True, "players": PLAYERS_DB.all(), "admins": _load_admins(), "total": PLAYERS_DB.count()}
+        return 200, {
+            "ok": True,
+            "players": USERS_DB.all(),
+            "admins": USERS_DB.admins(),
+            "total": USERS_DB.count(),
+        }
 
     if method == "POST" and path == "/api/player/remove":
         try:
             body = json.loads(body_bytes or b"{}")
         except Exception:
             body = {}
-        ok, user, reason = check_init_data(body.get("initData", ""))
+        init = _resolve_init_data(body, query)
+        ok, user, reason = check_init_data(init)
         if not ok or not user:
             return 401, {"ok": False, "error": reason}
         if not _is_admin(user.get("id")):
@@ -500,9 +656,7 @@ def handle_api(method: str, path: str, body_bytes: bytes):
             return 400, {"ok": False, "error": "bad id"}
         if str(user.get("id")) == target:
             return 400, {"ok": False, "error": "cannot remove self"}
-        PLAYERS_DB.remove(target)
-        admins = [a for a in _load_admins() if a != target]
-        _save_admins(admins)
+        USERS_DB.remove(target)
         return 200, {"ok": True, "removed": target}
 
     if method == "POST" and path == "/api/admin/set":
@@ -510,7 +664,8 @@ def handle_api(method: str, path: str, body_bytes: bytes):
             body = json.loads(body_bytes or b"{}")
         except Exception:
             body = {}
-        ok, user, reason = check_init_data(body.get("initData", ""))
+        init = _resolve_init_data(body, query)
+        ok, user, reason = check_init_data(init)
         if not ok or not user:
             return 401, {"ok": False, "error": reason}
         if not (OWNER_ID and str(user.get("id", "")) == str(OWNER_ID)):
@@ -518,13 +673,7 @@ def handle_api(method: str, path: str, body_bytes: bytes):
         target = str(body.get("id", ""))
         if not target:
             return 400, {"ok": False, "error": "bad id"}
-        admins = _load_admins()
-        if body.get("on"):
-            if target not in admins:
-                admins.append(target)
-        else:
-            admins = [a for a in admins if a != target]
-        _save_admins(admins)
+        USERS_DB.set_admin(target, bool(body.get("on")))
         return 200, {"ok": True}
 
     return 404, {"ok": False, "error": "not found"}
