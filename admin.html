@@ -52,12 +52,28 @@
         if (window.history.length > 1) window.history.back();
         else window.location.href = "index.html";
       });
-      if (!State.isOwner()) {
-        document.getElementById("admin-root").innerHTML =
-          '<div class="empty-state">' + Icons.get("shield") + '<div class="empty-title">403</div><div class="empty-sub">' + I18N.t("admin.denied") + '</div></div>';
-        return;
-      }
-      Views.admin();
+
+      // initData у Telegram иногда появляется чуть позже — ждём, как в мини-аппе
+      let tries = 0;
+      (function waitInit() {
+        if (!TG.getInitData() && tries < 50) {
+          TG.retryUser();
+          tries += 1;
+          return setTimeout(waitInit, 200);
+        }
+        if (!State.isOwner()) {
+          document.getElementById("admin-root").innerHTML =
+            '<div class="empty-state">' + Icons.get("shield") + '<div class="empty-title">403</div><div class="empty-sub">' + I18N.t("admin.denied") + '</div></div>';
+          return;
+        }
+        if (!TG.getInitData()) {
+          document.getElementById("admin-root").innerHTML =
+            '<div class="empty-state">' + Icons.get("shield") +
+            '<div class="empty-title">initData?</div><div class="empty-sub">Открой админ-панель внутри Telegram (через бота / кнопку меню), а не в браузере — иначе данные не подгрузятся.</div></div>';
+          return;
+        }
+        Views.admin();
+      })();
     })();
   </script>
 </body>

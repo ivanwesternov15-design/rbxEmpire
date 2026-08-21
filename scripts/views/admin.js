@@ -183,7 +183,7 @@ window.Views = Views;
       ? `<div class="sync-note">${Icons.get("shieldAlert")}${I18N.t("admin.users.forbidden")}</div>`
       : serverStatus === false
       ? `<div class="sync-note">${Icons.get("cloudOff")}${I18N.t("admin.users.offline")}</div>`
-      : "";
+      : `<div class="sync-note loading">${Icons.get("pulse")}${I18N.t("admin.users.loading") || "Загрузка…"} · ${initDataDiag()}</div>`;
 
     return `
       <div class="admin-section">
